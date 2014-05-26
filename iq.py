@@ -35,7 +35,7 @@ CONTINUE_BUTTON = '''//button[contains(@ng-click, "opt.game.newRate()")]
 BALANCE = '//a[contains(@value,"user.profile.balance")]'
 
 
-class Meta():
+class Iq():
     '''
     Base class for Meta
     '''
@@ -150,4 +150,4 @@ class Meta():
         self.browser.close()
 
 if __name__ == '__main__':
-    Meta()
+    Iq()
