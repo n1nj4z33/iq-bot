@@ -1,4 +1,10 @@
-ss
+iq-bot(Python)
 ==
 
-some stuff
+Required:
+    selenium
+    pywin32
+    alert window from MT
+
+Usage:
+./meta.py
