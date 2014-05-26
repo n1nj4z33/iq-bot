@@ -89,7 +89,7 @@ class Iq():
 
     def sell_byu_action(self, action):
         '''Sell or Byu action'''
-        if action == 'Byu':
+        if action == 'Buy':
             print '%s Buying...' % self.get_time()
             self.browser.find_element_by_xpath(BUY_UP_BUTTON).click()
             self.browser.find_element_by_xpath(BUY_UP_CONFIRM_BUTTON).click()
@@ -98,7 +98,7 @@ class Iq():
             self.browser.find_element_by_xpath(BUY_DOWN_BUTTON).click()
             self.browser.find_element_by_xpath(BUY_DOWN_CONFIRM_BUTTON).click()
         else:
-            print '%s wtf' % self.get_time()
+            print '%s No Buy or Sell in message' % self.get_time()
         print '%s Done' % self.get_time()
         self.continue_action()
 
