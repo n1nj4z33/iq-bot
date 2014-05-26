@@ -87,8 +87,8 @@ class Iq():
         text = ''.join((linetext[:linelength]))
         return text
 
-    def sell_byu_action(self, action):
-        '''Sell or Byu action'''
+    def sell_buy_action(self, action):
+        '''Sell or Buy action'''
         if action == 'Buy':
             print '%s Buying...' % self.get_time()
             self.browser.find_element_by_xpath(BUY_UP_BUTTON).click()
@@ -118,15 +118,15 @@ class Iq():
         self.browser.find_element_by_xpath(CONTINUE_BUTTON).click()
 
     def make_decision(self):
-        '''Decision to Sell or Byu action'''
+        '''Decision to Sell or Buy action'''
         text = self.get_message_text()
         print '%s Message from MT Alert: %s' % (self.get_time(), text)
         if BUY_TEXT in text:
             print '%s Make decision == Buy' % self.get_time()
-            self.sell_byu_action(BUY_TEXT)
+            self.sell_buy_action(BUY_TEXT)
         elif SELL_TEXT in text:
             print '%s Make decision == Sell' % self.get_time()
-            self.sell_byu_action(SELL_TEXT)
+            self.sell_buy_action(SELL_TEXT)
         else:
             print '%s Wait Message from MT Alert...' % self.get_time()
             sleep(1)
