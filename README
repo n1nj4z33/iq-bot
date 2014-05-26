@@ -1,11 +1,15 @@
 iq-bot(Python)
-==
+==============
 
 Required:
-==
-    selenium
-    pywin32
+=========
+selenium
+pywin32
 
 Usage:
-==
+======
 ./meta.py
+
+Info:
+=====
+Change email and password before use
