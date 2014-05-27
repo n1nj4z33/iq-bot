@@ -13,8 +13,8 @@ from selenium.common.exceptions import NoSuchElementException
 
 #Config
 URL = 'https://iqoption.com/ru'
-LOGIN_EMAIL = 'ninja_zee@sibmail.com'
-LOGIN_PWD = 'xxXX1234'
+LOGIN_EMAIL = ''
+LOGIN_PWD = ''
 TITLE = u'Алерт'
 WINDOW_ID = '#32770'
 TIMEOUT = 5
@@ -60,9 +60,7 @@ class Iq():
 
     def get_balance(self):
         '''Get current balance'''
-        sleep(10) #wait animation loaded
         balance = self.browser.find_element_by_xpath(BALANCE).text
-        print '%s Current balance = %s' % (self.get_time(), balance)
         return balance
 
     def login_action(self):
@@ -75,6 +73,7 @@ class Iq():
             self.browser.find_element_by_xpath(SUBMIT).click()
         else:
             print '%s Already login in...' % self.get_time()
+        sleep(5) #wait animation loaded
 
     def get_message_text(self):
         '''Get win32 MT Alert window/panel/message Text'''
@@ -116,20 +115,20 @@ class Iq():
         print '%s Wait for result...' % self.get_time()
         while not self.continue_button_exist():
             pass
-        self.check_result()
         self.browser.find_element_by_xpath(CONTINUE_BUTTON).click()
 
     def make_decision(self):
         '''Decision to Sell or Buy action'''
-        text = 'BuyBuy'#self.get_message_text()
-        print '%s Message from MT Alert: %s' % (self.get_time(), text)
-        if BUY_TEXT in text:
+        work_message = self.get_message_text()
+        print '%s Message from MT Alert: %s' % (self.get_time(), work_message)
+        if BUY_TEXT in work_message:
             self.sell_buy_action(BUY_TEXT)
-        elif SELL_TEXT in text:
-            self.sell_buy_action(SELL_TEXT)
+        elif SELL_TEXT in work_message:
+            self.sell_buy_action(SELL_TEXT) 
         else:
             print '%s Wait Message from MT Alert...' % self.get_time()
-
+        return work_message
+    
     def start_session(self):
         '''Begin trade'''
         print '%s Starting...' % self.get_time()
@@ -138,23 +137,25 @@ class Iq():
         self.get_balance()
         self.start_trade()
 
-    def check_result(self):
-        '''Gather result information'''
-        c = []
-        # a = self.browser.find_element_by_xpath('//tr')
-        # b = self.browser.find_element_by_xpath('//td')
-        # print a
-        # print b
-        # print a.text
-        # print b.text
-        # print c.append(a)
-        # print c.apeend(b.text)
+    def check_result(self, begin_balance):
+        sleep(10) #wait cash loaded 
+        end_balance = self.get_balance()
+        profit = float(end_balance) - float(begin_balance)
+        print '%s New balance = %s(%s)' % (self.get_time(), end_balance, profit) 
 
+    def wait_message_update(self, work_message):
+        print '%s Wait for update mesasge from MT alert...' % self.get_time()
+        while work_message == self.get_message_text():
+            pass
+               
     def start_trade(self):
         '''Tranding here'''
+        print '%s Current balance = %s' % (self.get_time(), self.get_balance())        
         while True:
-            self.make_decision()
-            #self.get_balance()
+            begin_balance = self.get_balance()
+            work_message = self.make_decision()
+            self.check_result(begin_balance)   
+            self.wait_message_update(work_message)
 
     def stop_session(self):
         '''Close Browser'''
