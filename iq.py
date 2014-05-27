@@ -13,8 +13,8 @@ from selenium.common.exceptions import NoSuchElementException
 
 #Config
 URL = 'https://iqoption.com/ru'
-LOGIN_EMAIL = ''
-LOGIN_PWD = ''
+LOGIN_EMAIL = 'ninja_zee@sibmail.com'
+LOGIN_PWD = 'xxXX1234'
 TITLE = u'Алерт'
 WINDOW_ID = '#32770'
 TIMEOUT = 5
@@ -60,6 +60,7 @@ class Iq():
 
     def get_balance(self):
         '''Get current balance'''
+        sleep(10) #wait animation loaded
         balance = self.browser.find_element_by_xpath(BALANCE).text
         print '%s Current balance = %s' % (self.get_time(), balance)
         return balance
@@ -72,7 +73,6 @@ class Iq():
             self.browser.find_element_by_xpath(EMAIL).send_keys(LOGIN_EMAIL)
             self.browser.find_element_by_xpath(PASSWORD).send_keys(LOGIN_PWD)
             self.browser.find_element_by_xpath(SUBMIT).click()
-            sleep(5)
         else:
             print '%s Already login in...' % self.get_time()
 
@@ -93,13 +93,14 @@ class Iq():
             print '%s Buying...' % self.get_time()
             self.browser.find_element_by_xpath(BUY_UP_BUTTON).click()
             self.browser.find_element_by_xpath(BUY_UP_CONFIRM_BUTTON).click()
+            #self.get_balance()
         elif action == 'Sell':
             print '%s Selling...' % self.get_time()
             self.browser.find_element_by_xpath(BUY_DOWN_BUTTON).click()
             self.browser.find_element_by_xpath(BUY_DOWN_CONFIRM_BUTTON).click()
+            #self.get_balance()
         else:
             print '%s No Buy or Sell in message' % self.get_time()
-        print '%s Done' % self.get_time()
         self.continue_action()
 
     def continue_button_exist(self):
@@ -112,38 +113,48 @@ class Iq():
 
     def continue_action(self):
         '''Wait until Continue Button is visible and click'''
+        print '%s Wait for result...' % self.get_time()
         while not self.continue_button_exist():
-            print '%s Wait CONTINUE_BUTTON...' % self.get_time()
-        sleep(1)
+            pass
+        self.check_result()
         self.browser.find_element_by_xpath(CONTINUE_BUTTON).click()
 
     def make_decision(self):
         '''Decision to Sell or Buy action'''
-        text = self.get_message_text()
+        text = 'BuyBuy'#self.get_message_text()
         print '%s Message from MT Alert: %s' % (self.get_time(), text)
         if BUY_TEXT in text:
-            print '%s Make decision == Buy' % self.get_time()
             self.sell_buy_action(BUY_TEXT)
         elif SELL_TEXT in text:
-            print '%s Make decision == Sell' % self.get_time()
             self.sell_buy_action(SELL_TEXT)
         else:
             print '%s Wait Message from MT Alert...' % self.get_time()
-            sleep(1)
 
     def start_session(self):
         '''Begin trade'''
         print '%s Starting...' % self.get_time()
         self.browser.get(URL)
         self.login_action()
+        self.get_balance()
         self.start_trade()
+
+    def check_result(self):
+        '''Gather result information'''
+        c = []
+        # a = self.browser.find_element_by_xpath('//tr')
+        # b = self.browser.find_element_by_xpath('//td')
+        # print a
+        # print b
+        # print a.text
+        # print b.text
+        # print c.append(a)
+        # print c.apeend(b.text)
 
     def start_trade(self):
         '''Tranding here'''
-        self.get_balance()
         while True:
             self.make_decision()
-        sleep(1)
+            #self.get_balance()
 
     def stop_session(self):
         '''Close Browser'''
