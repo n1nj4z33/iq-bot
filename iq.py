@@ -94,8 +94,9 @@ class Iq():
 
     def continue_action(self):
         '''Нажимаем кнопку Продолжить торги'''
-        if self.continue_button_exist():
-            self.browser.find_element_by_xpath(CONTINUE_BUTTON).click()
+        while not self.continue_button_exist():
+            pass
+        self.browser.find_element_by_xpath(CONTINUE_BUTTON).click()
 
     def sell_buy_action(self, action):
         '''Покупаем/продаем'''
@@ -119,6 +120,7 @@ class Iq():
 
     def check_result(self, begin_balance):
         '''Получаем новый баланс'''
+        print u'%s Ждем результата...' % self.get_time()
         sleep(10) #Ожидвние
         end_balance = self.get_balance()
         profit = float(end_balance) - float(begin_balance)
@@ -131,7 +133,7 @@ class Iq():
         while work_message == self.get_message_text():
             pass
         print u'%s Сообщение от MT Alert: "%s"' % (self.get_time(),
-                                                   work_message)
+                                                   self.get_message_text())
 
     def start_session(self):
         '''Запуск сессии'''
@@ -145,6 +147,7 @@ class Iq():
             self.wait_message_update(work_message)
             decision = self.make_decision(work_message)
             self.sell_buy_action(decision)
+            self.continue_action()
             self.check_result(begin_balance)
 
     def stop_session(self):
