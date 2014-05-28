@@ -1,9 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf8 -*-
+'''iq-bot'''
 __author__ = 'ninja_zee'
-'''
-some docstring
-'''
 import win32gui
 import win32con
 import struct
@@ -37,7 +35,7 @@ BALANCE = '//a[contains(@value,"user.profile.balance")]'
 
 class Iq():
     '''
-    Base class for Meta
+    Iq-bot class
     '''
     def __init__(self):
         self.options = webdriver.ChromeOptions()
@@ -46,37 +44,37 @@ class Iq():
         self.start_session()
 
     def get_time(self):
-        '''Get current time'''
+        '''Получаем текущее локальное время'''
         return strftime("%Y-%m-%d %H:%M:%S", localtime())
 
     def check_login(self):
-        '''Check if LOGIN_BUTTON exist in DOM'''
+        '''Ищем кнопку логина'''
         try:
             self.browser.find_element_by_xpath(LOGIN_BUTTON)
             return False
         except NoSuchElementException:
-            assert 0, "No such element " + LOGIN_BUTTON
+            assert 0, u'Не могу найти элемент %s' % LOGIN_BUTTON
             return True
 
     def get_balance(self):
-        '''Get current balance'''
+        '''Получаем текущий баланс'''
         balance = self.browser.find_element_by_xpath(BALANCE).text
         return balance
 
     def login_action(self):
-        '''Loging on'''
+        '''Логинимся'''
         if not self.check_login():
-            print '%s Login in to %s' % (self.get_time(), URL)
+            print u'%s Логинемся на %s' % (self.get_time(), URL)
             self.browser.find_element_by_xpath(LOGIN_BUTTON).click()
             self.browser.find_element_by_xpath(EMAIL).send_keys(LOGIN_EMAIL)
             self.browser.find_element_by_xpath(PASSWORD).send_keys(LOGIN_PWD)
             self.browser.find_element_by_xpath(SUBMIT).click()
         else:
-            print '%s Already login in...' % self.get_time()
+            print u'%s Уже залогинен...' % self.get_time()
         sleep(5) #wait animation loaded
 
     def get_message_text(self):
-        '''Get win32 MT Alert window/panel/message Text'''
+        '''Получаем win32 MT Alert window/panel/message Текст'''
         window = win32gui.FindWindow(WINDOW_ID, TITLE)
         panel = win32gui.FindWindowEx(window, 0, "Edit", None)
         bufferlength = struct.pack('i', 255)
@@ -86,24 +84,8 @@ class Iq():
         text = ''.join((linetext[:linelength]))
         return text
 
-    def sell_buy_action(self, action):
-        '''Sell or Buy action'''
-        if action == 'Buy':
-            print '%s Buying...' % self.get_time()
-            self.browser.find_element_by_xpath(BUY_UP_BUTTON).click()
-            self.browser.find_element_by_xpath(BUY_UP_CONFIRM_BUTTON).click()
-            #self.get_balance()
-        elif action == 'Sell':
-            print '%s Selling...' % self.get_time()
-            self.browser.find_element_by_xpath(BUY_DOWN_BUTTON).click()
-            self.browser.find_element_by_xpath(BUY_DOWN_CONFIRM_BUTTON).click()
-            #self.get_balance()
-        else:
-            print '%s No Buy or Sell in message' % self.get_time()
-        self.continue_action()
-
     def continue_button_exist(self):
-        '''Find Continue trade button'''
+        '''Ищем кнопку Продолжить торги'''
         try:
             self.browser.find_element_by_xpath(CONTINUE_BUTTON)
             return True
@@ -111,51 +93,59 @@ class Iq():
             return False
 
     def continue_action(self):
-        '''Wait until Continue Button is visible and click'''
-        print '%s Wait for result...' % self.get_time()
-        while not self.continue_button_exist():
-            pass
-        self.browser.find_element_by_xpath(CONTINUE_BUTTON).click()
+        '''Нажимаем кнопку Продолжить торги'''
+        if self.continue_button_exist():
+            self.browser.find_element_by_xpath(CONTINUE_BUTTON).click()
 
-    def make_decision(self):
-        '''Decision to Sell or Buy action'''
-        work_message = self.get_message_text()
-        print '%s Message from MT Alert: %s' % (self.get_time(), work_message)
-        if BUY_TEXT in work_message:
-            self.sell_buy_action(BUY_TEXT)
-        elif SELL_TEXT in work_message:
-            self.sell_buy_action(SELL_TEXT) 
+    def sell_buy_action(self, action):
+        '''Покупаем/продаем'''
+        if action == 'Buy':
+            print u'%s Покупаем...' % self.get_time()
+            self.browser.find_element_by_xpath(BUY_UP_BUTTON).click()
+            self.browser.find_element_by_xpath(BUY_UP_CONFIRM_BUTTON).click()
+        elif action == 'Sell':
+            print u'%s Продаем...' % self.get_time()
+            self.browser.find_element_by_xpath(BUY_DOWN_BUTTON).click()
+            self.browser.find_element_by_xpath(BUY_DOWN_CONFIRM_BUTTON).click()
         else:
-            print '%s Wait Message from MT Alert...' % self.get_time()
-        return work_message
-    
+            print u'%s Нет информации о продаже/покупке' % self.get_time()
+
+    def make_decision(self, work_message):
+        '''Ищем информацию о продаже/покупке в сообщении'''
+        if BUY_TEXT in work_message:
+            return BUY_TEXT
+        elif SELL_TEXT in work_message:
+            return SELL_TEXT
+
+    def check_result(self, begin_balance):
+        '''Получаем новый баланс'''
+        sleep(10) #Ожидвние
+        end_balance = self.get_balance()
+        profit = float(end_balance) - float(begin_balance)
+        print u'%s Новый баланс = %s(%s)' % (self.get_time(),
+                                            end_balance, profit)
+
+    def wait_message_update(self, work_message):
+        '''Проверяем уникальность сообщения'''
+        print u'%s Ждем сообщение от MT alert...' % self.get_time()
+        while work_message == self.get_message_text():
+            pass
+        print u'%s Сообщение от MT Alert: "%s"' % (self.get_time(),
+                                                   work_message)
+
     def start_session(self):
-        '''Begin trade'''
-        print '%s Starting...' % self.get_time()
+        '''Запуск сессии'''
+        print u'%s Запускаемся...' % self.get_time()
         self.browser.get(URL)
         self.login_action()
         self.get_balance()
-        self.start_trade()
-
-    def check_result(self, begin_balance):
-        sleep(10) #wait cash loaded 
-        end_balance = self.get_balance()
-        profit = float(end_balance) - float(begin_balance)
-        print '%s New balance = %s(%s)' % (self.get_time(), end_balance, profit) 
-
-    def wait_message_update(self, work_message):
-        print '%s Wait for update mesasge from MT alert...' % self.get_time()
-        while work_message == self.get_message_text():
-            pass
-               
-    def start_trade(self):
-        '''Tranding here'''
-        print '%s Current balance = %s' % (self.get_time(), self.get_balance())        
         while True:
             begin_balance = self.get_balance()
-            work_message = self.make_decision()
-            self.check_result(begin_balance)   
+            work_message = self.get_message_text()
             self.wait_message_update(work_message)
+            decision = self.make_decision(work_message)
+            self.sell_buy_action(decision)
+            self.check_result(begin_balance)
 
     def stop_session(self):
         '''Close Browser'''
