@@ -15,9 +15,9 @@ LOGIN_EMAIL = ''
 LOGIN_PWD = ''
 TITLE = u'Алерт'
 WINDOW_ID = '#32770'
-TIMEOUT = 5
-BUY_TEXT = 'Buy'
-SELL_TEXT = 'Sell'
+TIMEOUT = 10
+BUY_TEXT = 'BUYSELL MAGIC Buy'
+SELL_TEXT = 'BUYSELL MAGIC Sell'
 
 #Locators
 LOGIN_BUTTON = '//button[@ng-click="login()"]'
@@ -100,11 +100,11 @@ class Iq():
 
     def sell_buy_action(self, action):
         '''Покупаем/продаем'''
-        if action == 'Buy':
+        if action == BUY_TEXT:
             print u'%s Покупаем...' % self.get_time()
             self.browser.find_element_by_xpath(BUY_UP_BUTTON).click()
             self.browser.find_element_by_xpath(BUY_UP_CONFIRM_BUTTON).click()
-        elif action == 'Sell':
+        elif action == SELL_TEXT:
             print u'%s Продаем...' % self.get_time()
             self.browser.find_element_by_xpath(BUY_DOWN_BUTTON).click()
             self.browser.find_element_by_xpath(BUY_DOWN_CONFIRM_BUTTON).click()
