@@ -7,13 +7,19 @@ from win32con import EM_GETLINE
 from struct import pack
 from time import localtime, sleep, strftime
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as ec
 from selenium.common.exceptions import NoSuchElementException
+import sys
 
 #Config
 URL = 'https://iqoption.com/ru'
-LOGIN_EMAIL = ''
-LOGIN_PWD = ''
-TITLE = u'Алерт'
+URL_BINAR = "https://iqoption.com/ru/options/binary"
+URL_TURBO = "https://iqoption.com/ru/options/turbo"
+LOGIN_EMAIL = 'bonbow@mail.ru'
+LOGIN_PWD = 'xxXX1234'
+TITLE = u'Alert'
 WINDOW_ID = '#32770'
 TIMEOUT = 10
 BUY_TEXT = 'Buy'
@@ -37,6 +43,7 @@ class Iq():
     """
     Iq-bot class
     """
+
     def __init__(self):
         self.options = webdriver.ChromeOptions()
         self.browser = webdriver.Chrome(chrome_options=self.options)
@@ -70,9 +77,12 @@ class Iq():
             self.browser.find_element_by_xpath(EMAIL).send_keys(LOGIN_EMAIL)
             self.browser.find_element_by_xpath(PASSWORD).send_keys(LOGIN_PWD)
             self.browser.find_element_by_xpath(SUBMIT).click()
+            # Ждем появления нав бара
+            WebDriverWait(self.browser, 10).until(ec.presence_of_element_located((By.ID,
+                                                                                  "bs-example-navbar-collapse-1")))
         else:
             print u'%s Уже залогинен...' % self.get_time
-        sleep(TIMEOUT)
+        #sleep(TIMEOUT)
 
     @property
     def get_message_text(self):
@@ -116,7 +126,7 @@ class Iq():
     def check_result(self, begin_balance):
         """ Получаем новый баланс """
         print u'%s Ждем результата...' % self.get_time
-        sleep(TIMEOUT)
+        #sleep(TIMEOUT)
         end_balance = self.get_balance()
         profit = float(end_balance) - float(begin_balance)
         print u'%s Новый баланс = %s(%s)' % (self.get_time,
@@ -134,10 +144,26 @@ class Iq():
 
     def start_session(self):
         """ Запуск сессии """
+        if len(sys.argv) > 1:
+            if sys.argv[1] == "turbo":
+                turbo = True
+            else:
+                turbo = False
+        else:
+            turbo = False
+
         print u'%s Запускаемся...' % self.get_time
         self.browser.get(URL)
         self.login_action()
+
+        if turbo:
+            print u'%s Переходим на %s' % (self.get_time, URL_TURBO)
+            self.browser.get(URL_TURBO)
+        else:
+            print u'%s Переходим на %s' % (self.get_time, URL_BINAR)
+            self.browser.get(URL_BINAR)
         self.get_balance()
+
         while True:
             begin_balance = self.get_balance()
             work_message = self.get_message_text
@@ -146,7 +172,7 @@ class Iq():
             self.sell_buy_action(decision)
             self.continue_action()
             self.check_result(begin_balance)
-            print '-'*19
+            print '-' * 19
 
     def stop_session(self):
         """ Close Browser """
