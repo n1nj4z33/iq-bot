@@ -4,10 +4,8 @@
 __author__ = 'ninja_zee'
 from win32gui import FindWindow, FindWindowEx, SendMessage
 from win32con import EM_GETLINE
-from struct import pack as StructPack
-from time import localtime as Localtime
-from time import strftime as StrfTime
-from time import sleep as TimeSleep
+from struct import pack
+from time import localtime, sleep, strftime
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 
@@ -47,7 +45,7 @@ class Iq():
 
     def get_time(self):
         '''Получаем текущее локальное время'''
-        return StrfTime("%Y-%m-%d %H:%M:%S", Localtime())
+        return strftime("%Y-%m-%d %H:%M:%S", localtime())
 
     def check_login(self):
         '''Ищем кнопку логина'''
@@ -73,13 +71,13 @@ class Iq():
             self.browser.find_element_by_xpath(SUBMIT).click()
         else:
             print u'%s Уже залогинен...' % self.get_time()
-        TimeSleep(TIMEOUT)
+        sleep(TIMEOUT)
 
     def get_message_text(self):
         '''Получаем win32 MT Alert window/panel/message Текст'''
         window = FindWindow(WINDOW_ID, TITLE)
         panel = FindWindowEx(window, 0, "Edit", None)
-        bufferlength = StructPack('i', 255)
+        bufferlength = pack('i', 255)
         linetext = bufferlength + "".ljust(253)
         linelength = SendMessage(panel, EM_GETLINE,
                                  0, linetext)
@@ -123,7 +121,7 @@ class Iq():
     def check_result(self, begin_balance):
         '''Получаем новый баланс'''
         print u'%s Ждем результата...' % self.get_time()
-        TimeSleep(TIMEOUT)
+        sleep(TIMEOUT)
         end_balance = self.get_balance()
         profit = float(end_balance) - float(begin_balance)
         print u'%s Новый баланс = %s(%s)' % (self.get_time(),
@@ -151,6 +149,7 @@ class Iq():
             self.sell_buy_action(decision)
             self.continue_action()
             self.check_result(begin_balance)
+            print '-'*19
 
     def stop_session(self):
         '''Close Browser'''
