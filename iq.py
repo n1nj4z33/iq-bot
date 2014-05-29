@@ -102,7 +102,6 @@ class Iq():
 
     def sell_buy_action(self, action):
         '''Покупаем/продаем'''
-        print action
         if action == BUY_TEXT:
             print u'%s Покупаем...' % self.get_time()
             self.browser.find_element_by_xpath(BUY_UP_BUTTON).click()
