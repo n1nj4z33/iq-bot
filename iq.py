@@ -134,6 +134,8 @@ class Iq():
             pass
         print u'%s Сообщение от MT Alert: "%s"' % (self.get_time(),
                                                    self.get_message_text())
+        updated_message = self.get_message_text()
+        return updated_message
 
     def start_session(self):
         '''Запуск сессии'''
@@ -144,8 +146,8 @@ class Iq():
         while True:
             begin_balance = self.get_balance()
             work_message = self.get_message_text()
-            self.wait_message_update(work_message)
-            decision = self.make_decision(work_message)
+            updated_message = self.wait_message_update(work_message)
+            decision = self.make_decision(updated_message)
             self.sell_buy_action(decision)
             self.continue_action()
             self.check_result(begin_balance)
