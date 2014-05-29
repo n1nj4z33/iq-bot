@@ -2,10 +2,12 @@
 # -*- coding: utf8 -*-
 '''iq-bot'''
 __author__ = 'ninja_zee'
-import win32gui
-import win32con
-import struct
-from time import localtime, strftime, sleep
+from win32gui import FindWindow, FindWindowEx, SendMessage
+from win32con import EM_GETLINE
+from struct import pack as StructPack
+from time import localtime as Localtime
+from time import strftime as StrfTime
+from time import sleep as TimeSleep
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 
@@ -16,8 +18,8 @@ LOGIN_PWD = ''
 TITLE = u'Алерт'
 WINDOW_ID = '#32770'
 TIMEOUT = 10
-BUY_TEXT = 'BUYSELL MAGIC Buy'
-SELL_TEXT = 'BUYSELL MAGIC Sell'
+BUY_TEXT = 'Buy'
+SELL_TEXT = 'Sell'
 
 #Locators
 LOGIN_BUTTON = '//button[@ng-click="login()"]'
@@ -45,7 +47,7 @@ class Iq():
 
     def get_time(self):
         '''Получаем текущее локальное время'''
-        return strftime("%Y-%m-%d %H:%M:%S", localtime())
+        return StrfTime("%Y-%m-%d %H:%M:%S", Localtime())
 
     def check_login(self):
         '''Ищем кнопку логина'''
@@ -71,16 +73,16 @@ class Iq():
             self.browser.find_element_by_xpath(SUBMIT).click()
         else:
             print u'%s Уже залогинен...' % self.get_time()
-        sleep(5) #wait animation loaded
+        TimeSleep(TIMEOUT)
 
     def get_message_text(self):
         '''Получаем win32 MT Alert window/panel/message Текст'''
-        window = win32gui.FindWindow(WINDOW_ID, TITLE)
-        panel = win32gui.FindWindowEx(window, 0, "Edit", None)
-        bufferlength = struct.pack('i', 255)
+        window = FindWindow(WINDOW_ID, TITLE)
+        panel = FindWindowEx(window, 0, "Edit", None)
+        bufferlength = StructPack('i', 255)
         linetext = bufferlength + "".ljust(253)
-        linelength = win32gui.SendMessage(panel, win32con.EM_GETLINE, 0,
-                                          linetext)
+        linelength = SendMessage(panel, EM_GETLINE,
+                                 0, linetext)
         text = ''.join((linetext[:linelength]))
         return text
 
@@ -100,6 +102,7 @@ class Iq():
 
     def sell_buy_action(self, action):
         '''Покупаем/продаем'''
+        print action
         if action == BUY_TEXT:
             print u'%s Покупаем...' % self.get_time()
             self.browser.find_element_by_xpath(BUY_UP_BUTTON).click()
@@ -121,11 +124,11 @@ class Iq():
     def check_result(self, begin_balance):
         '''Получаем новый баланс'''
         print u'%s Ждем результата...' % self.get_time()
-        sleep(10) #Ожидвние
+        TimeSleep(TIMEOUT)
         end_balance = self.get_balance()
         profit = float(end_balance) - float(begin_balance)
         print u'%s Новый баланс = %s(%s)' % (self.get_time(),
-                                            end_balance, profit)
+                                             end_balance, profit)
 
     def wait_message_update(self, work_message):
         '''Проверяем уникальность сообщения'''
