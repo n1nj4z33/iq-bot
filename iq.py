@@ -5,7 +5,7 @@ __author__ = 'ninja_zee'
 from win32gui import FindWindow, FindWindowEx, SendMessage
 from win32con import EM_GETLINE
 from struct import pack
-from time import localtime, sleep, strftime
+from time import localtime, strftime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -37,6 +37,7 @@ BUY_DOWN_CONFIRM_BUTTON = '//button[contains(@ng-show, "put")][text()="Купи�
 CONTINUE_BUTTON = """//button[contains(@ng-click, "opt.game.newRate()")]
 [text()="Продолжить демо-торги"]"""
 BALANCE = '//a[contains(@value,"user.profile.balance")]'
+CLOSE_BUTTON = '//button[ng-click="close()"]'
 
 
 class Iq():
@@ -108,7 +109,13 @@ class Iq():
         """ Нажимаем кнопку Продолжить торги """
         while not self.continue_button_exist():
             pass
-        self.browser.find_element_by_xpath(CONTINUE_BUTTON).click()
+        try:
+            self.browser.find_element_by_xpath(CONTINUE_BUTTON).click()
+        except NoSuchElementException:
+            try:
+                self.browser.find_element_by_xpath(CLOSE_BUTTON).click()
+            except NoSuchElementException:
+                self.browser.refresh()
 
     def sell_buy_action(self, action):
         """ Покупаем/продаем """
