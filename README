@@ -8,8 +8,9 @@ pywin32
 
 Usage:
 ======
-./iq.py
+./iq.py [turbo]
 
 Info:
 =====
 Change email and password before use
+if 'turbo' argument then turbo option will use  
