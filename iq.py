@@ -50,9 +50,10 @@ class Iq():
     Iq-bot class
     """
 
-    def __init__(self, option, lang):
+    def __init__(self, option, lang, active):
         self.option = option
         self.lang = lang
+        self.active = active
         self.options = webdriver.ChromeOptions()
         self.browser = webdriver.Chrome(chrome_options=self.options)
         self.browser.implicitly_wait(TIMEOUT)
@@ -181,6 +182,11 @@ class Iq():
         else:
             print u'%s Переходим на %s...' % (self.get_time, BIN)
             self.browser.find_element_by_xpath(BIN_BUTTON).click()
+ 
+    def select_active(self):
+        if self.active == 'EUR_USD':
+            pass
+        pass
 
     def start_session(self):
         """ Запуск сессии """
@@ -188,6 +194,7 @@ class Iq():
         self.browser.get(URL)
         self.login_action()
         self.select_option()
+        self.select_active()
         print u'%s Начальный баланс: %s' % (self.get_time, self.get_balance())
 
         while True:
@@ -206,20 +213,27 @@ class Iq():
 
 if __name__ == '__main__':
     parser = OptionParser(usage='''Usage: iq.py
-        -o <option>
-        -l <language of MT alert window>''',
+        -o <Выбор опциона>
+        -l <Выбор языка MT alert окна>
+        -a <Выбор актива>''',
         version="1.0")
     parser.add_option("-o", "--option",
         dest="option",
         default="bin",
-        help="Choose option (bin or turbo)",)
+        help="Выбор опциона (bin or turbo)",)
     parser.add_option("-l", "--lang",
         dest="lang",
         default='eng',
-        help="Language of MT alert window (rus or eng)",)
+        help="Выбор языка MT alert окна (rus or eng)",)
+    parser.add_option("-a", "--active",
+        dest="active",
+        default='EUR_USD',
+        help="Выбор актива",)
     (options, args) = parser.parse_args()
 
     # if not options.lang:
     #     parser.error('lang is missed')
 
-    Iq(options.option, options.lang)
+    Iq(options.option,
+       options.lang,
+       options.active)
