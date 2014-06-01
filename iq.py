@@ -183,7 +183,7 @@ class Iq():
         self.browser.get(URL)
         self.login_action()
         self.select_option()
-        self.get_balance()
+        print u'%s Начальный баланс: %s' % (self.get_time, self.get_balance())
 
         while True:
             begin_balance = self.get_balance()
