@@ -8,7 +8,7 @@ pywin32
 
 Usage:
 ======
-./iq.py [turbo]
+./iq.py [-o --option turbo, bin] [-l --lang rus, eng]
 
 Info:
 =====
