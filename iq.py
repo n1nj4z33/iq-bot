@@ -17,8 +17,8 @@ import sys
 URL = 'https://iqoption.com/ru'
 URL_BINAR = "https://iqoption.com/ru/options/binary"
 URL_TURBO = "https://iqoption.com/ru/options/turbo"
-LOGIN_EMAIL = 'ninja_zee@sibmail.com'
-LOGIN_PWD = 'xxXX1234'
+LOGIN_EMAIL = ''
+LOGIN_PWD = ''
 TITLE = u'Alert'
 WINDOW_ID = '#32770'
 TIMEOUT = 10
