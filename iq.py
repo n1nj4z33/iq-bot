@@ -17,13 +17,15 @@ import sys
 URL = 'https://iqoption.com/ru'
 URL_BINAR = "https://iqoption.com/ru/options/binary"
 URL_TURBO = "https://iqoption.com/ru/options/turbo"
-LOGIN_EMAIL = ''
-LOGIN_PWD = ''
+LOGIN_EMAIL = 'ninja_zee@sibmail.com'
+LOGIN_PWD = 'xxXX1234'
 TITLE = u'Alert'
 WINDOW_ID = '#32770'
 TIMEOUT = 10
 BUY_TEXT = 'Buy'
 SELL_TEXT = 'Sell'
+TURBO = u'Турбо опцион'
+BIN = u'Бинарный опцион'
 
 #Locators
 LOGIN_BUTTON = '//button[@ng-click="login()"]'
@@ -38,6 +40,9 @@ CONTINUE_BUTTON = """//button[contains(@ng-click, "opt.game.newRate()")]
 [text()="Продолжить демо-торги"]"""
 BALANCE = '//a[contains(@value,"user.profile.balance")]'
 CLOSE_BUTTON = '//button[ng-click="close()"]'
+NAV_BAR = 'bs-example-navbar-collapse-1'
+BIN_BUTTON = '//span[contains(@class, "ng-binding")][text()="Бинарный опцион"]'
+TURBO_BUTTON = '//span[contains(@class, "ng-binding")][text()="Турбо опцион"]'
 
 
 class Iq():
@@ -79,8 +84,7 @@ class Iq():
             self.browser.find_element_by_xpath(PASSWORD).send_keys(LOGIN_PWD)
             self.browser.find_element_by_xpath(SUBMIT).click()
             # Ждем появления нав бара
-            WebDriverWait(self.browser, 10).until(ec.presence_of_element_located((By.ID,
-                                                                                  "bs-example-navbar-collapse-1")))
+            WebDriverWait(self.browser, 10).until(ec.presence_of_element_located((By.ID, NAV_BAR)))
         else:
             print u'%s Уже залогинен...' % self.get_time
         #sleep(TIMEOUT)
@@ -149,33 +153,43 @@ class Iq():
         updated_message = self.get_message_text
         return updated_message
 
-    def start_session(self):
-        """ Запуск сессии """
+    def make_decision(work_message):
+        """ Ищем информацию о продаже/покупке в сообщении """
+        if BUY_TEXT in work_message:
+            return BUY_TEXT
+        elif SELL_TEXT in work_message:
+            return SELL_TEXT
+
+    def is_option_turbo(self):
+        '''Проверяем наличие аргумента turbo'''
         if len(sys.argv) > 1:
             if sys.argv[1] == "turbo":
-                turbo = True
-            else:
-                turbo = False
+                return True
         else:
-            turbo = False
+            return False
 
+    def select_option(self):
+        '''Переходим в раздел опциона'''
+        if self.is_option_turbo():
+            print u'%s Переходим на %s...' % (self.get_time, TURBO)
+            self.browser.find_element_by_xpath(TURBO_BUTTON).click()
+        else:
+            print u'%s Переходим на %s...' % (self.get_time, BIN)
+            self.browser.find_element_by_xpath(BIN_BUTTON).click()
+
+    def start_session(self):
+        """ Запуск сессии """
         print u'%s Запускаемся...' % self.get_time
         self.browser.get(URL)
         self.login_action()
-
-        if turbo:
-            print u'%s Переходим на %s' % (self.get_time, URL_TURBO)
-            self.browser.get(URL_TURBO)
-        else:
-            print u'%s Переходим на %s' % (self.get_time, URL_BINAR)
-            self.browser.get(URL_BINAR)
+        self.select_option()
         self.get_balance()
 
         while True:
             begin_balance = self.get_balance()
             work_message = self.get_message_text
             updated_message = self.wait_message_update(work_message)
-            decision = make_decision(updated_message)
+            decision = self.make_decision(updated_message)
             self.sell_buy_action(decision)
             self.continue_action()
             self.check_result(begin_balance)
@@ -184,15 +198,6 @@ class Iq():
     def stop_session(self):
         """ Close Browser """
         self.browser.close()
-
-
-def make_decision(work_message):
-    """ Ищем информацию о продаже/покупке в сообщении """
-    if BUY_TEXT in work_message:
-        return BUY_TEXT
-    elif SELL_TEXT in work_message:
-        return SELL_TEXT
-
 
 if __name__ == '__main__':
     Iq()
