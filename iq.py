@@ -5,21 +5,21 @@ __author__ = 'ninja_zee'
 from win32gui import FindWindow, FindWindowEx, SendMessage
 from win32con import EM_GETLINE
 from struct import pack
-from time import localtime, strftime
+from time import localtime, strftime, sleep
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.common.exceptions import NoSuchElementException
 import sys
+from optparse import OptionParser
 
 #Config
 URL = 'https://iqoption.com/ru'
-URL_BINAR = "https://iqoption.com/ru/options/binary"
-URL_TURBO = "https://iqoption.com/ru/options/turbo"
 LOGIN_EMAIL = ''
 LOGIN_PWD = ''
-TITLE = u'Alert'
+TITLE_RUS = u'Алерт'
+TITLE_ENG = 'Alert'
 WINDOW_ID = '#32770'
 TIMEOUT = 10
 BUY_TEXT = 'Buy'
@@ -50,7 +50,9 @@ class Iq():
     Iq-bot class
     """
 
-    def __init__(self):
+    def __init__(self, option, lang):
+        self.option = option
+        self.lang = lang
         self.options = webdriver.ChromeOptions()
         self.browser = webdriver.Chrome(chrome_options=self.options)
         self.browser.implicitly_wait(TIMEOUT)
@@ -89,16 +91,21 @@ class Iq():
             print u'%s Уже залогинен...' % self.get_time
         #sleep(TIMEOUT)
 
-    @property
+    def get_windows_title(self):
+        if self.lang == 'eng':
+            return TITLE_ENG
+        return TITLE_RUS
+
     def get_message_text(self):
         """ Получаем win32 MT Alert window/panel/message Текст """
+        TITLE = self.get_windows_title()
         window = FindWindow(WINDOW_ID, TITLE)
         panel = FindWindowEx(window, 0, "Edit", None)
         bufferlength = pack('i', 255)
         linetext = bufferlength + "".ljust(253)
         linelength = SendMessage(panel, EM_GETLINE,
                                  0, linetext)
-        text = ''.join((linetext[:linelength]))
+        text = ''.join(linetext[:linelength])
         return text
 
     def continue_button_exist(self):
@@ -146,14 +153,14 @@ class Iq():
     def wait_message_update(self, work_message):
         """ Проверяем уникальность сообщения """
         print u'%s Ждем сообщение от MT alert...' % self.get_time
-        while work_message == self.get_message_text:
+        while work_message == self.get_message_text():
             pass
         print u'%s Сообщение от MT Alert: "%s"' % (self.get_time,
-                                                   self.get_message_text)
-        updated_message = self.get_message_text
+                                                   self.get_message_text())
+        updated_message = self.get_message_text()
         return updated_message
 
-    def make_decision(work_message):
+    def make_decision(self, work_message):
         """ Ищем информацию о продаже/покупке в сообщении """
         if BUY_TEXT in work_message:
             return BUY_TEXT
@@ -162,11 +169,9 @@ class Iq():
 
     def is_option_turbo(self):
         '''Проверяем наличие аргумента turbo'''
-        if len(sys.argv) > 1:
-            if sys.argv[1] == "turbo":
-                return True
-        else:
-            return False
+        if self.option == "turbo":
+            return True
+        return False
 
     def select_option(self):
         '''Переходим в раздел опциона'''
@@ -187,7 +192,7 @@ class Iq():
 
         while True:
             begin_balance = self.get_balance()
-            work_message = self.get_message_text
+            work_message = self.get_message_text()
             updated_message = self.wait_message_update(work_message)
             decision = self.make_decision(updated_message)
             self.sell_buy_action(decision)
@@ -200,4 +205,21 @@ class Iq():
         self.browser.close()
 
 if __name__ == '__main__':
-    Iq()
+    parser = OptionParser(usage='''Usage: iq.py
+        -o <option>
+        -l <language of MT alert window>''',
+        version="1.0")
+    parser.add_option("-o", "--option",
+        dest="option",
+        default="bin",
+        help="Choose option (bin or turbo)",)
+    parser.add_option("-l", "--lang",
+        dest="lang",
+        default='eng',
+        help="Language of MT alert window (rus or eng)",)
+    (options, args) = parser.parse_args()
+
+    # if not options.lang:
+    #     parser.error('lang is missed')
+
+    Iq(options.option, options.lang)
