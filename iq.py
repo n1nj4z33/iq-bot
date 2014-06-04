@@ -36,8 +36,10 @@ BUY_UP_BUTTON = '//button[contains(@ng-click,"call")]'
 BUY_DOWN_BUTTON = '//button[contains(@ng-click,"put")]'
 BUY_UP_CONFIRM_BUTTON = '//button[contains(@ng-show, "call")][text()="Купить"]'
 BUY_DOWN_CONFIRM_BUTTON = '//button[contains(@ng-show, "put")][text()="Купить"]'
-CONTINUE_BUTTON = """//button[contains(@ng-click, "opt.game.newRate()")]
+CONTINUE_DEMO_BUTTON = """//button[contains(@ng-click, "opt.game.newRate()")]
 [text()="Продолжить демо-торги"]"""
+CONTINUE_REAL_BUTTON = """//button[contains(@ng-click, "opt.game.newRate()")]
+[text()="Новый опцион"]"""
 BALANCE = '//a[contains(@value,"user.profile.balance")]'
 CLOSE_BUTTON = '//button[ng-click="close()"]'
 NAV_BAR = 'bs-example-navbar-collapse-1'
@@ -117,17 +119,21 @@ class Iq():
         text = ''.join(linetext[:linelength])
         return text
 
-    def continue_button_exist(self):
+    def continue_button_exist(self, mode):
         ''' Ищем кнопку Продолжить торги '''
         try:
-            self.browser.find_element_by_xpath(CONTINUE_BUTTON)
-            return True
+            if mode == 'real':
+                self.browser.find_element_by_xpath(CONTINUE_REAL_BUTTON)
+                return True
+            else:
+                self.browser.find_element_by_xpath(CONTINUE_DEMO_BUTTON)
+                return True
         except NoSuchElementException:
             return False
 
-    def continue_action(self):
+    def continue_action(self, mode):
         ''' Нажимаем кнопку Продолжить торги '''
-        while not self.continue_button_exist():
+        while not self.continue_button_exist(mode):
             pass
         try:
             self.browser.find_element_by_xpath(CONTINUE_BUTTON).click()
@@ -212,7 +218,7 @@ class Iq():
                 work_message = self.get_message_text()
                 updated_message = self.wait_message_update(work_message)
             self.sell_buy_action(updated_message)
-            self.continue_action()
+            self.continue_action(mode)
             self.check_result(begin_balance)
             print '-' * 19
 
