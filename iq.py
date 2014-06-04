@@ -136,7 +136,10 @@ class Iq():
         while not self.continue_button_exist(mode):
             pass
         try:
-            self.browser.find_element_by_xpath(CONTINUE_BUTTON).click()
+            if mode == 'real':
+                self.browser.find_element_by_xpath(CONTINUE_REAL_BUTTON).click()
+            else:
+                self.browser.find_element_by_xpath(CONTINUE_DEMO_BUTTON).click()
         except NoSuchElementException:
             try:
                 self.browser.find_element_by_xpath(CLOSE_BUTTON).click()
