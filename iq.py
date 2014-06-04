@@ -5,19 +5,16 @@ __author__ = 'ninja_zee'
 from win32gui import FindWindow, FindWindowEx, SendMessage
 from win32con import EM_GETLINE
 from struct import pack
-from time import localtime, strftime #sleep
+from time import localtime, strftime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.common.exceptions import NoSuchElementException
-#import sys
 from optparse import OptionParser
 
 #Config
 URL = 'https://iqoption.com/ru'
-LOGIN_EMAIL = ''
-LOGIN_PWD = ''
 TITLE_RUS = u'Алерт'
 TITLE_ENG = 'Alert'
 WINDOW_ID = '#32770'
@@ -41,8 +38,10 @@ CONTINUE_BUTTON = """//button[contains(@ng-click, "opt.game.newRate()")]
 BALANCE = '//a[contains(@value,"user.profile.balance")]'
 CLOSE_BUTTON = '//button[ng-click="close()"]'
 NAV_BAR = 'bs-example-navbar-collapse-1'
-BIN_BUTTON = '//span[contains(@class, "ng-binding")][text()="Бинарный опцион"]'
-TURBO_BUTTON = '//span[contains(@class, "ng-binding")][text()="Турбо опцион"]'
+#BIN_BUTTON = '//span[contains(@class, "ng-binding")][text()="Бинарный опцион"]'
+#TURBO_BUTTON = '//span[contains(@class, "ng-binding")][text()="Турбо опцион"]'
+TURBO_BUTTON = '//a[@href="/ru/options/turbo"]'
+BIN_BUTTON = '//a[@href="/ru/options/binary"]'
 
 
 class Iq():
@@ -50,13 +49,16 @@ class Iq():
     Iq-bot class
     '''
 
-    def __init__(self, option, lang, active):
+    def __init__(self, user, pwd, mode, option, lang, active):
+        self.user = user
+        self.pwd = pwd
+        self.mode = mode
         self.option = option
         self.lang = lang
         self.active = active
         self.time = strftime("%Y-%m-%d %H:%M:%S", localtime())
-        self.options = webdriver.ChromeOptions()
-        self.browser = webdriver.Chrome(chrome_options=self.options)
+        self.chrome_options = webdriver.ChromeOptions()
+        self.browser = webdriver.Chrome(chrome_options=self.chrome_options)
         self.browser.implicitly_wait(TIMEOUT)
         self.start_session()
 
@@ -89,8 +91,8 @@ class Iq():
         if not self.check_login():
             print u'%s Логинемся на %s' % (self.get_time, URL)
             self.browser.find_element_by_xpath(LOGIN_BUTTON).click()
-            self.browser.find_element_by_xpath(EMAIL).send_keys(LOGIN_EMAIL)
-            self.browser.find_element_by_xpath(PASSWORD).send_keys(LOGIN_PWD)
+            self.browser.find_element_by_xpath(EMAIL).send_keys(self.user)
+            self.browser.find_element_by_xpath(PASSWORD).send_keys(self.pwd)
             self.browser.find_element_by_xpath(SUBMIT).click()
         else:
             print u'%s Уже залогинен...' % self.get_time
@@ -185,6 +187,17 @@ class Iq():
         ''' Выбираем актив торовли '''
         if self.active == 'EUR/USD':
             pass
+        elif self.active == 'BITCOIN':
+            pass
+
+    def check_mode(self):
+        ''' Выбираем режим торовли '''
+        if self.mode == 'demo':
+            pass
+        elif self.mode == 'real':
+            pass
+        elif self.mode == 'test':
+            pass
 
     def start_session(self):
         ''' Запуск сессии '''
@@ -194,6 +207,8 @@ class Iq():
         self.select_option()
         self.select_active()
         print u'%s Начальный баланс: %s' % (self.get_time, self.get_balance())
+
+        self.check_mode()
 
         while True:
             begin_balance = self.get_balance()
@@ -210,27 +225,47 @@ class Iq():
 
 if __name__ == '__main__':
     PARSER = OptionParser(usage='''Usage: iq.py
-        -o <Выбор опциона>
-        -l <Выбор языка MT alert окна>
-        -a <Выбор актива>''',
-        version="1.0")
-    PARSER.add_option("-o", "--option",
-        dest="option",
-        default="bin",
-        help="Выбор опциона (bin or turbo)",)
-    PARSER.add_option("-l", "--lang",
-        dest="lang",
+        -u <'''u'''Email пользователя>
+        -p <'''u'''Пароль пользователя>
+        -m <'''u'''Выбор режима работы [demo,real,test]>
+        -o <'''u'''Выбор опциона [turbo,bin]>
+        -l <'''u'''Выбор языка MT alert окна [eng,rus]>
+        -a <'''u'''Выбор актива [EUR/USD, BITCOIN]>''',
+        version='1.0')
+    PARSER.add_option('-u', '--user',
+        dest='user',
+        default='',
+        help=u'Email пользователя',)
+    PARSER.add_option('-p', '--pwd',
+        dest='pwd',
+        default='',
+        help=u'Пароль пользователя',)
+    PARSER.add_option('-m', '--mode',
+        dest='mode',
+        default='demo',
+        help=u'Выбор режима работы [demo,real,test]',)
+    PARSER.add_option('-o', '--option',
+        dest='option',
+        default='bin',
+        help=u'Выбор опциона (bin or turbo)',)
+    PARSER.add_option('-l', '--lang',
+        dest='lang',
         default='eng',
-        help="Выбор языка MT alert окна (rus or eng)",)
-    PARSER.add_option("-a", "--active",
-        dest="active",
+        help=u'Выбор языка MT alert окна (rus or eng)',)
+    PARSER.add_option('-a', '--active',
+        dest='active',
         default='EUR/USD',
-        help="Выбор актива",)
+        help=u'Выбор актива',)
     (OPTIONS, ARGS) = PARSER.parse_args()
 
-    # if not options.lang:
-    #     PARSER.error('lang is missed')
+    if not OPTIONS.user:
+        PARSER.error(u'Не указан Email пользователя')
+    if not OPTIONS.pwd:
+        PARSER.error(u'Не указан Пароль пользователя')
 
-    Iq(OPTIONS.option,
+    Iq(OPTIONS.user,
+       OPTIONS.pwd,
+       OPTIONS.mode,
+       OPTIONS.option,
        OPTIONS.lang,
        OPTIONS.active)
