@@ -1,17 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf8 -*-
-"""iq-bot"""
+'''iq-bot'''
 __author__ = 'ninja_zee'
 from win32gui import FindWindow, FindWindowEx, SendMessage
 from win32con import EM_GETLINE
 from struct import pack
-from time import localtime, strftime, sleep
+from time import localtime, strftime #sleep
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.common.exceptions import NoSuchElementException
-import sys
+#import sys
 from optparse import OptionParser
 
 #Config
@@ -46,14 +46,15 @@ TURBO_BUTTON = '//span[contains(@class, "ng-binding")][text()="Турбо опц
 
 
 class Iq():
-    """
+    '''
     Iq-bot class
-    """
+    '''
 
     def __init__(self, option, lang, active):
         self.option = option
         self.lang = lang
         self.active = active
+        self.time = strftime("%Y-%m-%d %H:%M:%S", localtime())
         self.options = webdriver.ChromeOptions()
         self.browser = webdriver.Chrome(chrome_options=self.options)
         self.browser.implicitly_wait(TIMEOUT)
@@ -61,11 +62,11 @@ class Iq():
 
     @property
     def get_time(self):
-        """ Получаем текущее локальное время """
-        return strftime("%Y-%m-%d %H:%M:%S", localtime())
+        ''' Получаем текущее локальное время '''
+        return self.time
 
     def check_login(self):
-        """ Ищем кнопку логина """
+        ''' Ищем кнопку логина '''
         try:
             self.browser.find_element_by_xpath(LOGIN_BUTTON)
             return False
@@ -74,33 +75,37 @@ class Iq():
             return True
 
     def get_balance(self):
-        """ Получаем текущий баланс """
+        ''' Получаем текущий баланс '''
         balance = self.browser.find_element_by_xpath(BALANCE).text
         return balance
 
+    def wait_navbar(self):
+        '''Ожидание появления NAV_BAR'''
+        WebDriverWait(self.browser, 10).until(ec.presence_of_element_located(
+                                             (By.ID, NAV_BAR)))
+
     def login_action(self):
-        """ Логинимся """
+        ''' Логинимся '''
         if not self.check_login():
             print u'%s Логинемся на %s' % (self.get_time, URL)
             self.browser.find_element_by_xpath(LOGIN_BUTTON).click()
             self.browser.find_element_by_xpath(EMAIL).send_keys(LOGIN_EMAIL)
             self.browser.find_element_by_xpath(PASSWORD).send_keys(LOGIN_PWD)
             self.browser.find_element_by_xpath(SUBMIT).click()
-            # Ждем появления нав бара
-            WebDriverWait(self.browser, 10).until(ec.presence_of_element_located((By.ID, NAV_BAR)))
         else:
             print u'%s Уже залогинен...' % self.get_time
         #sleep(TIMEOUT)
 
     def get_windows_title(self):
+        ''' Язык Title для окна MT Alert '''
         if self.lang == 'eng':
             return TITLE_ENG
         return TITLE_RUS
 
     def get_message_text(self):
-        """ Получаем win32 MT Alert window/panel/message Текст """
-        TITLE = self.get_windows_title()
-        window = FindWindow(WINDOW_ID, TITLE)
+        ''' Получаем win32 MT Alert window/panel/message Текст '''
+        title = self.get_windows_title()
+        window = FindWindow(WINDOW_ID, title)
         panel = FindWindowEx(window, 0, "Edit", None)
         bufferlength = pack('i', 255)
         linetext = bufferlength + "".ljust(253)
@@ -110,7 +115,7 @@ class Iq():
         return text
 
     def continue_button_exist(self):
-        """ Ищем кнопку Продолжить торги """
+        ''' Ищем кнопку Продолжить торги '''
         try:
             self.browser.find_element_by_xpath(CONTINUE_BUTTON)
             return True
@@ -118,7 +123,7 @@ class Iq():
             return False
 
     def continue_action(self):
-        """ Нажимаем кнопку Продолжить торги """
+        ''' Нажимаем кнопку Продолжить торги '''
         while not self.continue_button_exist():
             pass
         try:
@@ -129,13 +134,13 @@ class Iq():
             except NoSuchElementException:
                 self.browser.refresh()
 
-    def sell_buy_action(self, action):
-        """ Покупаем/продаем """
-        if action == BUY_TEXT:
+    def sell_buy_action(self, updated_message):
+        ''' Покупаем/продаем '''
+        if BUY_TEXT in updated_message:
             print u'%s Покупаем...' % self.get_time
             self.browser.find_element_by_xpath(BUY_UP_BUTTON).click()
             self.browser.find_element_by_xpath(BUY_UP_CONFIRM_BUTTON).click()
-        elif action == SELL_TEXT:
+        elif SELL_TEXT in updated_message:
             print u'%s Продаем...' % self.get_time
             self.browser.find_element_by_xpath(BUY_DOWN_BUTTON).click()
             self.browser.find_element_by_xpath(BUY_DOWN_CONFIRM_BUTTON).click()
@@ -143,7 +148,7 @@ class Iq():
             print u'%s Нет информации о продаже/покупке' % self.get_time
 
     def check_result(self, begin_balance):
-        """ Получаем новый баланс """
+        ''' Получаем новый баланс '''
         print u'%s Ждем результата...' % self.get_time
         #sleep(TIMEOUT)
         end_balance = self.get_balance()
@@ -152,7 +157,7 @@ class Iq():
                                              end_balance, profit)
 
     def wait_message_update(self, work_message):
-        """ Проверяем уникальность сообщения """
+        ''' Проверяем уникальность сообщения '''
         print u'%s Ждем сообщение от MT alert...' % self.get_time
         while work_message == self.get_message_text():
             pass
@@ -160,13 +165,6 @@ class Iq():
                                                    self.get_message_text())
         updated_message = self.get_message_text()
         return updated_message
-
-    def make_decision(self, work_message):
-        """ Ищем информацию о продаже/покупке в сообщении """
-        if BUY_TEXT in work_message:
-            return BUY_TEXT
-        elif SELL_TEXT in work_message:
-            return SELL_TEXT
 
     def is_option_turbo(self):
         '''Проверяем наличие аргумента turbo'''
@@ -182,14 +180,14 @@ class Iq():
         else:
             print u'%s Переходим на %s...' % (self.get_time, BIN)
             self.browser.find_element_by_xpath(BIN_BUTTON).click()
- 
+
     def select_active(self):
-        if self.active == 'EUR_USD':
+        ''' Выбираем актив торовли '''
+        if self.active == 'EUR/USD':
             pass
-        pass
 
     def start_session(self):
-        """ Запуск сессии """
+        ''' Запуск сессии '''
         print u'%s Запускаемся...' % self.get_time
         self.browser.get(URL)
         self.login_action()
@@ -201,39 +199,38 @@ class Iq():
             begin_balance = self.get_balance()
             work_message = self.get_message_text()
             updated_message = self.wait_message_update(work_message)
-            decision = self.make_decision(updated_message)
-            self.sell_buy_action(decision)
+            self.sell_buy_action(updated_message)
             self.continue_action()
             self.check_result(begin_balance)
             print '-' * 19
 
     def stop_session(self):
-        """ Close Browser """
+        ''' Close Browser '''
         self.browser.close()
 
 if __name__ == '__main__':
-    parser = OptionParser(usage='''Usage: iq.py
+    PARSER = OptionParser(usage='''Usage: iq.py
         -o <Выбор опциона>
         -l <Выбор языка MT alert окна>
         -a <Выбор актива>''',
         version="1.0")
-    parser.add_option("-o", "--option",
+    PARSER.add_option("-o", "--option",
         dest="option",
         default="bin",
         help="Выбор опциона (bin or turbo)",)
-    parser.add_option("-l", "--lang",
+    PARSER.add_option("-l", "--lang",
         dest="lang",
         default='eng',
         help="Выбор языка MT alert окна (rus or eng)",)
-    parser.add_option("-a", "--active",
+    PARSER.add_option("-a", "--active",
         dest="active",
-        default='EUR_USD',
+        default='EUR/USD',
         help="Выбор актива",)
-    (options, args) = parser.parse_args()
+    (OPTIONS, ARGS) = PARSER.parse_args()
 
     # if not options.lang:
-    #     parser.error('lang is missed')
+    #     PARSER.error('lang is missed')
 
-    Iq(options.option,
-       options.lang,
-       options.active)
+    Iq(OPTIONS.option,
+       OPTIONS.lang,
+       OPTIONS.active)
