@@ -5,7 +5,7 @@
 * pywin32
 
 ###Usage:
-* python iq.py
+python iq.py
 * -u <'Email пользователя>
 * -p <Пароль пользователя>
 * -m <Выбор режима работы [demo,real,test]>
