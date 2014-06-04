@@ -5,10 +5,15 @@
 2. pywin32
 
 ###Usage:
-./iq.py [-o  or --option] [turbo or bin] [-l or --lang] [rus or eng]
+./iq.py
+        -u <Email пользователя>
+        -p <Пароль пользователя>
+        -m <Выбор режима работы [demo,real,test]>
+        -o <Выбор опциона [turbo,bin]>
+        -l <Выбор языка MT alert окна [eng,rus]>
+        -a <Выбор актива [EUR/USD, BITCOIN]>
 
 ####Example:
-./iq.py -o bin -l rus
+./iq.py -u user_name -p password
 
-###Info:
-Change email and password before use
+
