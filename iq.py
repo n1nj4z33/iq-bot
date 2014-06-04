@@ -25,7 +25,7 @@ SELL_TEXT = 'Sell'
 TURBO = u'Турбо опцион'
 BIN = u'Бинарный опцион'
 TEST_MESSAGES = ['Buy', 'Sell']
-MODES = ['test', 'real', 'demo']
+MODES = ['TEST', 'REAL', 'DEMO']
 
 #Locators
 LOGIN_BUTTON = '//button[@ng-click="login()"]'
@@ -156,7 +156,11 @@ class Iq():
         sleep(TIMEOUT) #Необходимо подождать прогрузку баланса
         end_balance = self.get_balance()
         profit = float(end_balance) - float(begin_balance)
-        print u'%s Новый баланс = %s(%s)' % (self.get_time,
+        if float(end_balance) > float(begin_balance):
+        print u'%s Новый баланс = %s('+'%s)' % (self.get_time,
+                                             end_balance, profit)
+        else:
+            print u'%s Новый баланс = %s(%s)' % (self.get_time,
                                              end_balance, profit)
 
     def wait_message_update(self, work_message):
@@ -202,7 +206,7 @@ class Iq():
         print '-' * 19
         while True:
             begin_balance = self.get_balance()
-            if mode == 'test':
+            if mode == 'TEST':
                 updated_message = random.choice(TEST_MESSAGES)
             else:
                 work_message = self.get_message_text()
@@ -220,7 +224,7 @@ if __name__ == '__main__':
     PARSER = OptionParser(usage='''Usage: iq.py
         -u <'''u'''Email пользователя>
         -p <'''u'''Пароль пользователя>
-        -m <'''u'''Выбор режима работы [demo,real,test]>
+        -m <'''u'''Выбор режима работы [DEMO,REAL,TEST]>
         -o <'''u'''Выбор опциона [turbo,bin]>
         -l <'''u'''Выбор языка MT alert окна [eng,rus]>
         -a <'''u'''Выбор актива [EUR/USD, BITCOIN]>''',
@@ -236,7 +240,7 @@ if __name__ == '__main__':
     PARSER.add_option('-m', '--mode',
         dest='mode',
         default='',
-        help=u'Выбор режима работы [demo,real,test]',)
+        help=u'Выбор режима работы [DEMO,REAL,TEST]',)
     PARSER.add_option('-o', '--option',
         dest='option',
         default='bin',
