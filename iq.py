@@ -157,7 +157,7 @@ class Iq():
         end_balance = self.get_balance()
         profit = float(end_balance) - float(begin_balance)
         if float(end_balance) > float(begin_balance):
-            print u'%s Новый баланс = %s('+'%s)' % (self.get_time,
+            print u'%s Новый баланс = %s(''+''%s)' % (self.get_time,
                                              end_balance, profit)
         else:
             print u'%s Новый баланс = %s(%s)' % (self.get_time,
