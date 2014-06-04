@@ -94,9 +94,9 @@ class Iq():
             self.browser.find_element_by_xpath(EMAIL).send_keys(self.user)
             self.browser.find_element_by_xpath(PASSWORD).send_keys(self.pwd)
             self.browser.find_element_by_xpath(SUBMIT).click()
+            self.wait_navbar()
         else:
             print u'%s Уже залогинен...' % self.get_time
-        #sleep(TIMEOUT)
 
     def get_windows_title(self):
         ''' Язык Title для окна MT Alert '''
