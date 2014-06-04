@@ -1,8 +1,8 @@
 #iq-bot(Python)
 
 ###Required:
-selenium
-pywin32
+1. selenium
+2. pywin32
 
 ###Usage:
 ./iq.py [-o  or --option] [turbo or bin] [-l or --lang] [rus or eng]
