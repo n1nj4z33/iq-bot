@@ -8,14 +8,17 @@
 python iq.py
 * -u <'Email' пользователя>
 * -p <Пароль пользователя>
-* -m <Выбор режима работы [DEMO,REAL,TEST]>
-* -o <Выбор опциона [turbo,bin]>
-* -l <Выбор языка MT alert окна [eng,rus]>
+* -m <Выбор режима работы [demo, real, test]>
+* -o <Выбор опциона [turbo, bin]>
+* -l <Выбор языка MT alert окна [eng, rus]>
 * -a <Выбор актива [EUR/USD, BITCOIN]>
 
 ####Example:
-```./iq.py -u user_name -p password```
+```./iq.py -u user_name -p password -m test```
 
 ####Info:
-Режимы работы [DEMO (Демо счет),REAL (Реальный счет (нереализовано)),TEST(Тестовый режим без сообщений от МТ)]
+Режимы работы 
+* demo (Демо счет)
+* real (Реальный счет)
+* test (Тестовый режим без сообщений от МТ)
 
