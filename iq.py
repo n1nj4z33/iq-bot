@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf8 -*-
-'''iq-bot'''
+"""iq-bot"""
 __author__ = 'ninja_zee'
 from win32gui import FindWindow, FindWindowEx, SendMessage
 from win32con import EM_GETLINE
@@ -11,7 +11,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, ElementNotVisibleException
 from optparse import OptionParser
 
 #Config
@@ -48,9 +48,9 @@ BIN_BUTTON = '//a[@href="/ru/options/binary"]'
 
 
 class Iq():
-    '''
+    """
     Iq-bot class
-    '''
+    """
 
     def __init__(self, *args):
         self.user = OPTIONS.user
@@ -67,11 +67,11 @@ class Iq():
 
     @property
     def get_time(self):
-        ''' Получаем текущее локальное время '''
+        """ Получаем текущее локальное время """
         return self.time
 
     def check_login(self):
-        ''' Ищем кнопку логина '''
+        """ Ищем кнопку логина """
         try:
             self.browser.find_element_by_xpath(LOGIN_BUTTON)
             return False
@@ -80,17 +80,17 @@ class Iq():
             return True
 
     def get_balance(self):
-        ''' Получаем текущий баланс '''
+        """ Получаем текущий баланс """
         balance = self.browser.find_element_by_xpath(BALANCE).text
         return balance
 
     def wait_navbar(self):
-        '''Ожидание появления NAV_BAR'''
+        """Ожидание появления NAV_BAR"""
         WebDriverWait(self.browser, 10).until(ec.presence_of_element_located(
-                                             (By.ID, NAV_BAR)))
+            (By.ID, NAV_BAR)))
 
     def login_action(self):
-        ''' Логинимся '''
+        """ Логинимся """
         if not self.check_login():
             print u'%s Логинемся на %s' % (self.get_time, URL)
             self.browser.find_element_by_xpath(LOGIN_BUTTON).click()
@@ -102,13 +102,13 @@ class Iq():
             print u'%s Уже залогинен' % self.get_time
 
     def get_windows_title(self):
-        ''' Язык Title для окна MT Alert '''
+        """ Язык Title для окна MT Alert """
         if self.lang == 'eng':
             return TITLE_ENG
         return TITLE_RUS
 
     def get_message_text(self):
-        ''' Получаем win32 MT Alert window/panel/message Текст '''
+        """ Получаем win32 MT Alert window/panel/message Текст """
         title = self.get_windows_title()
         window = FindWindow(WINDOW_ID, title)
         panel = FindWindowEx(window, 0, "Edit", None)
@@ -120,7 +120,7 @@ class Iq():
         return text
 
     def continue_button_exist(self, mode):
-        ''' Ищем кнопку Продолжить торги '''
+        """ Ищем кнопку Продолжить торги """
         try:
             if mode == 'real':
                 self.browser.find_element_by_xpath(CONTINUE_REAL_BUTTON)
@@ -128,11 +128,11 @@ class Iq():
             else:
                 self.browser.find_element_by_xpath(CONTINUE_DEMO_BUTTON)
                 return True
-        except NoSuchElementException:
+        except (NoSuchElementException, ElementNotVisibleException):
             return False
 
     def continue_action(self, mode):
-        ''' Нажимаем кнопку Продолжить торги '''
+        """ Нажимаем кнопку Продолжить торги """
         while not self.continue_button_exist(mode):
             pass
         try:
@@ -140,14 +140,14 @@ class Iq():
                 self.browser.find_element_by_xpath(CONTINUE_REAL_BUTTON).click()
             else:
                 self.browser.find_element_by_xpath(CONTINUE_DEMO_BUTTON).click()
-        except NoSuchElementException:
+        except (NoSuchElementException, ElementNotVisibleException):
             try:
                 self.browser.find_element_by_xpath(CLOSE_BUTTON).click()
-            except NoSuchElementException:
+            except (NoSuchElementException, ElementNotVisibleException):
                 self.browser.refresh()
 
     def sell_buy_action(self, updated_message):
-        ''' Покупаем/продаем '''
+        """ Покупаем/продаем """
         if BUY_TEXT in updated_message:
             print u'%s Покупаем' % self.get_time
             self.browser.find_element_by_xpath(BUY_UP_BUTTON).click()
@@ -160,20 +160,20 @@ class Iq():
             print u'%s Нет информации о продаже/покупке' % self.get_time
 
     def check_result(self, begin_balance):
-        ''' Получаем новый баланс '''
+        """ Получаем новый баланс """
         print u'%s Ждем результата' % self.get_time
-        sleep(TIMEOUT) #Необходимо подождать прогрузку баланса
+        sleep(TIMEOUT)  # Необходимо подождать прогрузку баланса
         end_balance = self.get_balance()
         profit = float(end_balance) - float(begin_balance)
         if float(end_balance) > float(begin_balance):
             print u'%s Новый баланс = %s(''+''%s)' % (self.get_time,
-                                             end_balance, profit)
+                                                      end_balance, profit)
         else:
             print u'%s Новый баланс = %s(%s)' % (self.get_time,
-                                             end_balance, profit)
+                                                 end_balance, profit)
 
     def wait_message_update(self, work_message):
-        ''' Проверяем уникальность сообщения '''
+        """ Проверяем уникальность сообщения """
         print u'%s Ждем сообщение от MT alert' % self.get_time
         while work_message == self.get_message_text():
             pass
@@ -183,13 +183,13 @@ class Iq():
         return updated_message
 
     def is_option_turbo(self):
-        '''Проверяем наличие аргумента turbo'''
+        """Проверяем наличие аргумента turbo"""
         if self.option == "turbo":
             return True
         return False
 
     def select_option(self):
-        '''Переходим в раздел опциона'''
+        """Переходим в раздел опциона"""
         if self.is_option_turbo():
             print u'%s Переходим на %s' % (self.get_time, TURBO)
             self.browser.find_element_by_xpath(TURBO_BUTTON).click()
@@ -198,14 +198,14 @@ class Iq():
             self.browser.find_element_by_xpath(BIN_BUTTON).click()
 
     def select_active(self):
-        ''' Выбираем актив торовли '''
+        """ Выбираем актив торовли """
         if self.active == 'EUR/USD':
             pass
         elif self.active == 'BITCOIN':
             pass
 
     def start_session(self, mode):
-        ''' Запуск сессии '''
+        """ Запуск сессии """
         print u'%s Запускаемся в режме %s' % (self.get_time, mode)
         self.browser.get(URL)
         self.login_action()
@@ -226,42 +226,43 @@ class Iq():
             print '-' * 19
 
     def stop_session(self):
-        ''' Close Browser '''
+        """ Close Browser """
         self.browser.close()
 
+
 if __name__ == '__main__':
-    PARSER = OptionParser(usage='''Usage: iq.py
-        -u <'''u'''Email пользователя>
-        -p <'''u'''Пароль пользователя>
-        -m <'''u'''Выбор режима работы [demo, real, test]>
-        -o <'''u'''Выбор опциона [turbo, bin]>
-        -l <'''u'''Выбор языка MT alert окна [eng, rus]>
-        -a <'''u'''Выбор актива [EUR/USD, BITCOIN]>''',
-        version='1.0')
+    PARSER = OptionParser(usage="""Usage: iq.py
+        -u <"""u"""Email пользователя>
+        -p <"""u"""Пароль пользователя>
+        -m <"""u"""Выбор режима работы [demo, real, test]>
+        -o <"""u"""Выбор опциона [turbo, bin]>
+        -l <"""u"""Выбор языка MT alert окна [eng, rus]>
+        -a <"""u"""Выбор актива [EUR/USD, BITCOIN]>""",
+                          version='1.0')
     PARSER.add_option('-u', '--user',
-        dest='user',
-        default='',
-        help=u'Email пользователя',)
+                      dest='user',
+                      default='',
+                      help=u'Email пользователя', )
     PARSER.add_option('-p', '--pwd',
-        dest='pwd',
-        default='',
-        help=u'Пароль пользователя',)
+                      dest='pwd',
+                      default='',
+                      help=u'Пароль пользователя', )
     PARSER.add_option('-m', '--mode',
-        dest='mode',
-        default='',
-        help=u'Выбор режима работы [demo, real, test]',)
+                      dest='mode',
+                      default='',
+                      help=u'Выбор режима работы [demo, real, test]', )
     PARSER.add_option('-o', '--option',
-        dest='option',
-        default='bin',
-        help=u'Выбор опциона (bin or turbo)',)
+                      dest='option',
+                      default='bin',
+                      help=u'Выбор опциона (bin or turbo)', )
     PARSER.add_option('-l', '--lang',
-        dest='lang',
-        default='eng',
-        help=u'Выбор языка MT alert окна (rus or eng)',)
+                      dest='lang',
+                      default='eng',
+                      help=u'Выбор языка MT alert окна (rus or eng)', )
     PARSER.add_option('-a', '--active',
-        dest='active',
-        default='EUR/USD',
-        help=u'Выбор актива',)
+                      dest='active',
+                      default='EUR/USD',
+                      help=u'Выбор актива', )
     (OPTIONS, ARGS) = PARSER.parse_args()
 
     if not OPTIONS.user:
