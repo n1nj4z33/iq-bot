@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf8 -*-
-"""iq-bot"""
+""" iq-bot """
 __author__ = 'ninja_zee'
 from win32gui import FindWindow, FindWindowEx, SendMessage
 from win32con import EM_GETLINE
@@ -151,11 +151,24 @@ class Iq():
         if BUY_TEXT in updated_message:
             print u'%s Покупаем' % self.get_time
             self.browser.find_element_by_xpath(BUY_UP_BUTTON).click()
-            self.browser.find_element_by_xpath(BUY_UP_CONFIRM_BUTTON).click()
+            try:
+                self.browser.find_element_by_xpath(BUY_UP_CONFIRM_BUTTON).click()
+            except ElementNotVisibleException:
+                self.browser.refresh()
+                self.browser.find_element_by_xpath(BUY_UP_BUTTON).click()
+                self.browser.find_element_by_xpath(BUY_UP_CONFIRM_BUTTON).click()
+
         elif SELL_TEXT in updated_message:
             print u'%s Продаем' % self.get_time
             self.browser.find_element_by_xpath(BUY_DOWN_BUTTON).click()
-            self.browser.find_element_by_xpath(BUY_DOWN_CONFIRM_BUTTON).click()
+            try:
+                self.browser.find_element_by_xpath(BUY_DOWN_CONFIRM_BUTTON).click()
+            except ElementNotVisibleException:
+                self.browser.refresh()
+                self.browser.find_element_by_xpath(BUY_DOWN_BUTTON).click()
+                self.browser.find_element_by_xpath(BUY_DOWN_CONFIRM_BUTTON).click()
+
+
         else:
             print u'%s Нет информации о продаже/покупке' % self.get_time
 
