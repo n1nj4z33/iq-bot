@@ -15,6 +15,7 @@ python iq.py
 * -c <Опции для запуска Chrome>
 Полный список опций запуска Crome (http://peter.sh/experiments/chromium-command-line-switches/)
 * -s <Вкл/Выкл звуки страницы [on, off]>
+* -b <Текущая ставка [int max 10]>
 
 ####Example:
 ```./iq.py -u user_name -p password -m test```
