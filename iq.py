@@ -41,11 +41,19 @@ CONTINUE_DEMO_BUTTON = """//button[contains(@ng-click, "opt.game.newRate()")]
 CONTINUE_REAL_BUTTON = """//button[contains(@ng-click, "opt.game.newRate()")]
 [text()="Новый опцион"]"""
 BALANCE = '//a[contains(@value,"user.profile.balance")]'
-CLOSE_BUTTON = '//button[ng-click="close()"]'
+CLOSE_BUTTON = '//button[@ng-click="close()"][text()="Закрыть"]' 
 NAV_BAR = 'bs-example-navbar-collapse-1'
 TURBO_BUTTON = '//a[@href="/ru/options/turbo"]'
 BIN_BUTTON = '//a[@href="/ru/options/binary"]'
-
+LANG_CNTRL = '//ul[@ng-controller="ChangeLangCtrl"]'
+DROPDOWN_MENU = '//ul[@class="dropdown-menu"]'
+ENG_LANG = '/li/a[text()="English"]'
+RUS_LANG = '/li/a[text()="Русский"]'
+CONSPIRACY_TIME_CNTRL = '//div[@ng-change="opt.onChangeTime(opt.data.expTime)"]'
+SOUND_BUTTON = '//div[@ng-show="sound"]'
+ACTIVE_CNTRL = '//ul[contains(@class, "all-actives")]'
+PAIRS_TAB = '//a[contains(text(), "Валютные пары")]'
+ACTIVE_BUTTON = '//div[contains(@class, "active")]/div/table'
 
 class Iq():
     """
@@ -59,8 +67,12 @@ class Iq():
         self.option = OPTIONS.option
         self.lang = OPTIONS.lang
         self.active = OPTIONS.active
+        self.sound = OPTIONS.sound
+        self.chrome = OPTIONS.chrome
         self.time = strftime("%Y-%m-%d %H:%M:%S", localtime())
         self.chrome_options = webdriver.ChromeOptions()
+        if self.chrome: 
+            self.chrome_options.add_argument(self.chrome)
         self.browser = webdriver.Chrome(chrome_options=self.chrome_options)
         self.browser.implicitly_wait(TIMEOUT)
         self.start_session(self.mode)
@@ -123,11 +135,24 @@ class Iq():
         """ Ищем кнопку Продолжить торги """
         try:
             if mode == 'real':
-                self.browser.find_element_by_xpath(CONTINUE_REAL_BUTTON)
-                return True
+                return self.browser.find_element_by_xpath(CONTINUE_REAL_BUTTON)
             else:
-                self.browser.find_element_by_xpath(CONTINUE_DEMO_BUTTON)
-                return True
+                return self.browser.find_element_by_xpath(CONTINUE_DEMO_BUTTON)
+        except (NoSuchElementException, ElementNotVisibleException):
+            return False
+    
+    def error_button_exist(self):
+        """ Ищем кнопку Закрыть """
+        try:
+            self.browser.find_element_by_xpath(CLOSE_BUTTON)
+            return True
+        except (NoSuchElementException, ElementNotVisibleException):
+            return False
+
+    def error_window_close():
+        """Зыкрываем окно с ошибкой"""
+        try:
+            self.browser.find_element_by_xpath(CLOSE_BUTTON).click()
         except (NoSuchElementException, ElementNotVisibleException):
             return False
 
@@ -136,39 +161,28 @@ class Iq():
         while not self.continue_button_exist(mode):
             pass
         try:
-            if mode == 'real':
-                self.browser.find_element_by_xpath(CONTINUE_REAL_BUTTON).click()
-            else:
-                self.browser.find_element_by_xpath(CONTINUE_DEMO_BUTTON).click()
+            self.continue_button_exist(mode).click()
         except (NoSuchElementException, ElementNotVisibleException):
-            try:
-                self.browser.find_element_by_xpath(CLOSE_BUTTON).click()
-            except (NoSuchElementException, ElementNotVisibleException):
-                self.browser.refresh()
+            return False
 
     def sell_buy_action(self, updated_message):
         """ Покупаем/продаем """
         if BUY_TEXT in updated_message:
             print u'%s Покупаем' % self.get_time
             self.browser.find_element_by_xpath(BUY_UP_BUTTON).click()
+            sleep(1) # For test only
             try:
+                self.browser.find_element_by_xpath(BUY_UP_CONFIRM_BUTTON)
+            finally:
                 self.browser.find_element_by_xpath(BUY_UP_CONFIRM_BUTTON).click()
-            except ElementNotVisibleException:
-                self.browser.refresh()
-                self.browser.find_element_by_xpath(BUY_UP_BUTTON).click()
-                self.browser.find_element_by_xpath(BUY_UP_CONFIRM_BUTTON).click()
-
         elif SELL_TEXT in updated_message:
             print u'%s Продаем' % self.get_time
             self.browser.find_element_by_xpath(BUY_DOWN_BUTTON).click()
+            sleep(1) # For test only
             try:
+                 self.browser.find_element_by_xpath(BUY_DOWN_CONFIRM_BUTTON)
+            finally:
                 self.browser.find_element_by_xpath(BUY_DOWN_CONFIRM_BUTTON).click()
-            except ElementNotVisibleException:
-                self.browser.refresh()
-                self.browser.find_element_by_xpath(BUY_DOWN_BUTTON).click()
-                self.browser.find_element_by_xpath(BUY_DOWN_CONFIRM_BUTTON).click()
-
-
         else:
             print u'%s Нет информации о продаже/покупке' % self.get_time
 
@@ -195,33 +209,78 @@ class Iq():
         updated_message = self.get_message_text()
         return updated_message
 
-    def is_option_turbo(self):
-        """Проверяем наличие аргумента turbo"""
-        if self.option == "turbo":
-            return True
-        return False
-
     def select_option(self):
-        """Переходим в раздел опциона"""
-        if self.is_option_turbo():
+        """ Переходим в раздел опциона """
+        if self.option == 'turbo':
             print u'%s Переходим на %s' % (self.get_time, TURBO)
             self.browser.find_element_by_xpath(TURBO_BUTTON).click()
-        else:
+        elif self.option == 'bin':
             print u'%s Переходим на %s' % (self.get_time, BIN)
             self.browser.find_element_by_xpath(BIN_BUTTON).click()
+        else:
+            assert 0, '%s Неверно указан опцион для торговли %s' % (self.get_time, self.option)
 
     def select_active(self):
         """ Выбираем актив торовли """
-        if self.active == 'EUR/USD':
-            pass
-        elif self.active == 'BITCOIN':
-            pass
+        if self.active:
+            print u'%s Выбираем актив %s' % (self.get_time, self.active)
+            try:
+                self.browser.find_element_by_xpath(ACTIVE_CNTRL).click()
+                try:
+                    self.browser.find_element_by_xpath(PAIRS_TAB).click()
+                    try:
+                        self.browser.find_element_by_xpath(ACTIVE_BUTTON+'//span[text()="'+self.active.upper()+'"]').click()
+                    except NoSuchElementException:
+                        assert 0, u'%s Не могу найти элемент %s' % (self.get_time, PAIRS_TAB)        
+                except NoSuchElementException:
+                    assert 0, u'%s Не могу найти элемент %s' % (self.get_time, PAIRS_TAB)
+            except NoSuchElementException:
+                assert 0, u'%s Не могу найти элемент %s' % (self.get_time, ACTIVE_CNTRL)
+
+    def select_conspiracy_time(self):
+        """ Выбираем последнее время конспирации """
+        try:
+            button = self.browser.find_element_by_xpath(CONSPIRACY_TIME_CNTRL).click()
+            try:
+                times = self.browser.find_elements_by_xpath(CONSPIRACY_TIME_CNTRL+DROPDOWN_MENU+'//li/a') 
+                element = times[3] # Последний элемент в списке
+                print u'%s Выбираем время конспирации %s' % (self.get_time, element.text)
+                element.click()
+            except NoSuchElementException:
+                assert 0, u'%s Не могу найти элемент %s' % (self.get_time, select_time)
+        except NoSuchElementException:
+            assert 0, u'%s Не могу найти элемент %s' % (self.get_time, button)
+    
+    def select_language(self):
+        """ Выбираем язык страницы"""
+        if self.lang == 'rus':
+            try:
+                button = self.browser.find_element_by_xpath(LANG_CNTRL)
+                button.click()
+                try:
+                    rus_lang = self.browser.find_element_by_xpath(LANG_CNTRL+DROPDOWN_MENU+RUS_LANG)
+                    rus_lang.click()
+                except NoSuchElementException:
+                    assert 0, u'%s Не могу найти элемент %s' % (self.get_time, rus_lang)
+            except NoSuchElementException:
+                assert 0, u'%s Не могу найти элемент %s' % (self.get_time, button)
+    
+    def turn_off_sound(self):
+        """Выключаем звук"""
+        if self.sound == 'off':
+            try:
+                print u'%s Выключаем звук' % (self.get_time)
+                self.browser.find_element_by_xpath(SOUND_BUTTON).click()
+            except (NoSuchElementException, ElementNotVisibleException):
+                return False
 
     def start_session(self, mode):
         """ Запуск сессии """
         print u'%s Запускаемся в режме %s' % (self.get_time, mode)
         self.browser.get(URL)
         self.login_action()
+        self.turn_off_sound()
+        #self.select_language() #For future mb
         self.select_option()
         self.select_active()
         print u'%s Начальный баланс: %s' % (self.get_time, self.get_balance())
@@ -233,14 +292,18 @@ class Iq():
             else:
                 work_message = self.get_message_text()
                 updated_message = self.wait_message_update(work_message)
+            self.select_conspiracy_time()
             self.sell_buy_action(updated_message)
+            if self.error_button_exist():
+                self.error_window_close()
+                self.sell_buy_action(updated_message)
             self.continue_action(mode)
             self.check_result(begin_balance)
             print '-' * 19
 
     def stop_session(self):
         """ Close Browser """
-        self.browser.close()
+        self.browser.quit()
 
 
 if __name__ == '__main__':
@@ -250,7 +313,9 @@ if __name__ == '__main__':
         -m <"""u"""Выбор режима работы [demo, real, test]>
         -o <"""u"""Выбор опциона [turbo, bin]>
         -l <"""u"""Выбор языка MT alert окна [eng, rus]>
-        -a <"""u"""Выбор актива [EUR/USD, BITCOIN]>""",
+        -a <"""u"""Выбор актива [eur/usd, aud/cad]>
+        -c <"""u"""Опции для запуска Chrome>
+        -s <"""u"""Вкл/Выкл звуки страницы [on, off]>""",
                           version='1.0')
     PARSER.add_option('-u', '--user',
                       dest='user',
@@ -274,8 +339,17 @@ if __name__ == '__main__':
                       help=u'Выбор языка MT alert окна (rus or eng)', )
     PARSER.add_option('-a', '--active',
                       dest='active',
-                      default='EUR/USD',
+                      default='eur/usd',
                       help=u'Выбор актива', )
+    PARSER.add_option('-c', '--chrome',
+                      dest='chrome',
+                      default='',
+                      help=u'Опции для Chrome browser (http://peter.sh/experiments/chromium-command-line-switches/)', )
+    PARSER.add_option('-s', '--sound',
+                      dest='sound',
+                      default='off',
+                      help=u'Вкл/Выкл звуки страницы', )
+
     (OPTIONS, ARGS) = PARSER.parse_args()
 
     if not OPTIONS.user:
