@@ -167,7 +167,7 @@ class Iq():
 
     def sell_buy_action(self, updated_message):
         """ Покупаем/продаем """
-        if BUY_TEXT in updated_message:
+        if BUY_TEXT or BUY_TEXT.upper() in updated_message:
             print u'%s Покупаем' % self.get_time
             self.browser.find_element_by_xpath(BUY_UP_BUTTON).click()
             sleep(1) # For test only
@@ -175,7 +175,7 @@ class Iq():
                 self.browser.find_element_by_xpath(BUY_UP_CONFIRM_BUTTON).click()
             except NoSuchElementException:
                 return False
-        elif SELL_TEXT in updated_message:
+        elif SELL_TEXT or SELL_TEXT.upper() in updated_message:
             print u'%s Продаем' % self.get_time
             self.browser.find_element_by_xpath(BUY_DOWN_BUTTON).click()
             sleep(1) # For test only
@@ -237,9 +237,9 @@ class Iq():
             except NoSuchElementException:
                 assert 0, u'%s Не могу найти элемент %s' % (self.get_time, ACTIVE_CNTRL)
 
-    def select_conspiracy_time(self, mode):
+    def select_conspiracy_time(self):
         """ Выбираем последнее время конспирации """
-        if mode == 'turbo':
+        if self.option == 'turbo':
             try:
                 button = self.browser.find_element_by_xpath(CONSPIRACY_TIME_CNTRL).click()
                 try:
@@ -295,7 +295,7 @@ class Iq():
             else:
                 work_message = self.get_message_text()
                 updated_message = self.wait_message_update(work_message)
-            self.select_conspiracy_time(mode)
+            self.select_conspiracy_time()
             self.sell_buy_action(updated_message)
             if self.error_button_exist():
                 self.error_window_close()
