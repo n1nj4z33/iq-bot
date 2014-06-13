@@ -273,6 +273,8 @@ class Iq():
                 self.browser.find_element_by_xpath(SOUND_BUTTON).click()
             except (NoSuchElementException, ElementNotVisibleException):
                 return False
+        elif self.sound == 'on':
+            pass
 
     def start_session(self, mode):
         """ Запуск сессии """
