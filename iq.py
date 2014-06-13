@@ -167,7 +167,7 @@ class Iq():
 
     def sell_buy_action(self, updated_message):
         """ Покупаем/продаем """
-        if BUY_TEXT or BUY_TEXT.upper() in updated_message:
+        if BUY_TEXT.upper() in updated_message:
             print u'%s Покупаем' % self.get_time
             self.browser.find_element_by_xpath(BUY_UP_BUTTON).click()
             sleep(1) # For test only
@@ -175,7 +175,7 @@ class Iq():
                 self.browser.find_element_by_xpath(BUY_UP_CONFIRM_BUTTON).click()
             except NoSuchElementException:
                 return False
-        elif SELL_TEXT or SELL_TEXT.upper() in updated_message:
+        elif SELL_TEXT.upper() in updated_message:
             print u'%s Продаем' % self.get_time
             self.browser.find_element_by_xpath(BUY_DOWN_BUTTON).click()
             sleep(1) # For test only
