@@ -54,6 +54,8 @@ SOUND_BUTTON = '//div[@ng-show="sound"]'
 ACTIVE_CNTRL = '//ul[contains(@class, "all-actives")]'
 PAIRS_TAB = '//a[contains(text(), "Валютные пары")]'
 ACTIVE_BUTTON = '//div[contains(@class, "active")]/div/table'
+DEPOSIT_BUTTON = '//input[@name="deposit"]'
+
 
 class Iq():
     """
@@ -68,6 +70,7 @@ class Iq():
         self.lang = OPTIONS.lang
         self.active = OPTIONS.active
         self.sound = OPTIONS.sound
+        self.bet = OPTIONS.bet
         self.chrome = OPTIONS.chrome
         self.time = strftime("%Y-%m-%d %H:%M:%S", localtime())
         self.chrome_options = webdriver.ChromeOptions()
@@ -253,7 +256,7 @@ class Iq():
                 assert 0, u'%s Не могу найти элемент %s' % (self.get_time, button)
     
     def select_language(self):
-        """ Выбираем язык страницы"""
+        """ Выбираем язык страницы """
         if self.lang == 'rus':
             try:
                 button = self.browser.find_element_by_xpath(LANG_CNTRL)
@@ -267,7 +270,7 @@ class Iq():
                 assert 0, u'%s Не могу найти элемент %s' % (self.get_time, button)
     
     def turn_off_sound(self):
-        """Выключаем звук"""
+        """ Выключаем звук """
         if self.sound == 'off':
             try:
                 print u'%s Выключаем звук' % (self.get_time)
@@ -276,6 +279,17 @@ class Iq():
                 return False
         elif self.sound == 'on':
             pass
+
+    def select_bet(self):
+        """ Выбираем текущую ставку"""
+        if self.bet:
+            try:
+                print u'%s Выбираем текущую ставку %s' % (self.get_time, self.bet)
+                element = self.browser.find_element_by_xpath(DEPOSIT_BUTTON)
+                element.clear()
+                element.send_keys(self.bet)
+            except (NoSuchElementException, ElementNotVisibleException):
+                return False
 
     def start_session(self, mode):
         """ Запуск сессии """
@@ -296,6 +310,7 @@ class Iq():
                 work_message = self.get_message_text()
                 updated_message = self.wait_message_update(work_message)
             self.select_conspiracy_time()
+            self.select_bet()
             self.sell_buy_action(updated_message)
             if self.error_button_exist():
                 self.error_window_close()
@@ -318,7 +333,8 @@ if __name__ == '__main__':
         -l <"""u"""Выбор языка MT alert окна [eng, rus]>
         -a <"""u"""Выбор актива [eur/usd, aud/cad]>
         -c <"""u"""Опции для запуска Chrome>
-        -s <"""u"""Вкл/Выкл звуки страницы [on, off]>""",
+        -s <"""u"""Вкл/Выкл звуки страницы [on, off]>
+        -b <"""u""">Текущая ставка""",
                           version='1.0')
     PARSER.add_option('-u', '--user',
                       dest='user',
@@ -352,6 +368,10 @@ if __name__ == '__main__':
                       dest='sound',
                       default='off',
                       help=u'Вкл/Выкл звуки страницы', )
+    PARSER.add_option('-b', '--bet',
+                      dest='bet',
+                      default='1',
+                      help=u'Текущая ставка', )
 
     (OPTIONS, ARGS) = PARSER.parse_args()
 
