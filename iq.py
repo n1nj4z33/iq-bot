@@ -172,17 +172,17 @@ class Iq():
             self.browser.find_element_by_xpath(BUY_UP_BUTTON).click()
             sleep(1) # For test only
             try:
-                self.browser.find_element_by_xpath(BUY_UP_CONFIRM_BUTTON)
-            finally:
                 self.browser.find_element_by_xpath(BUY_UP_CONFIRM_BUTTON).click()
+            except NoSuchElementException:
+                return False
         elif SELL_TEXT in updated_message:
             print u'%s Продаем' % self.get_time
             self.browser.find_element_by_xpath(BUY_DOWN_BUTTON).click()
             sleep(1) # For test only
             try:
-                 self.browser.find_element_by_xpath(BUY_DOWN_CONFIRM_BUTTON)
-            finally:
                 self.browser.find_element_by_xpath(BUY_DOWN_CONFIRM_BUTTON).click()
+            except NoSuchElementException:
+                return False
         else:
             print u'%s Нет информации о продаже/покупке' % self.get_time
 
@@ -237,19 +237,20 @@ class Iq():
             except NoSuchElementException:
                 assert 0, u'%s Не могу найти элемент %s' % (self.get_time, ACTIVE_CNTRL)
 
-    def select_conspiracy_time(self):
+    def select_conspiracy_time(self, mode):
         """ Выбираем последнее время конспирации """
-        try:
-            button = self.browser.find_element_by_xpath(CONSPIRACY_TIME_CNTRL).click()
+        if mode == 'turbo':
             try:
-                times = self.browser.find_elements_by_xpath(CONSPIRACY_TIME_CNTRL+DROPDOWN_MENU+'//li/a') 
-                element = times[3] # Последний элемент в списке
-                print u'%s Выбираем время конспирации %s' % (self.get_time, element.text)
-                element.click()
+                button = self.browser.find_element_by_xpath(CONSPIRACY_TIME_CNTRL).click()
+                try:
+                    times = self.browser.find_elements_by_xpath(CONSPIRACY_TIME_CNTRL+DROPDOWN_MENU+'//li/a')
+                    element = times[3] # Последний элемент в списке
+                    print u'%s Выбираем время конспирации %s' % (self.get_time, element.text)
+                    element.click()
+                except NoSuchElementException:
+                    assert 0, u'%s Не могу найти элемент %s' % (self.get_time, select_time)
             except NoSuchElementException:
-                assert 0, u'%s Не могу найти элемент %s' % (self.get_time, select_time)
-        except NoSuchElementException:
-            assert 0, u'%s Не могу найти элемент %s' % (self.get_time, button)
+                assert 0, u'%s Не могу найти элемент %s' % (self.get_time, button)
     
     def select_language(self):
         """ Выбираем язык страницы"""
@@ -294,7 +295,7 @@ class Iq():
             else:
                 work_message = self.get_message_text()
                 updated_message = self.wait_message_update(work_message)
-            self.select_conspiracy_time()
+            self.select_conspiracy_time(mode)
             self.sell_buy_action(updated_message)
             if self.error_button_exist():
                 self.error_window_close()
