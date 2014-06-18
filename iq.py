@@ -97,7 +97,7 @@ class Iq():
     def get_balance(self):
         """ Получаем текущий баланс """
         balance = self.browser.find_element_by_xpath(BALANCE).text
-        return balance
+        return balance.replace(' ', '')
 
     def wait_navbar(self):
         """Ожидание появления NAV_BAR"""
@@ -290,6 +290,10 @@ class Iq():
                 element.send_keys(self.bet)
             except (NoSuchElementException, ElementNotVisibleException):
                 return False
+    
+    def select_work_time(self):
+        """ Выбираем время работы """
+        pass
 
     def start_session(self, mode):
         """ Запуск сессии """
@@ -334,7 +338,7 @@ if __name__ == '__main__':
         -a <"""u"""Выбор актива [eur/usd, aud/cad]>
         -c <"""u"""Опции для запуска Chrome>
         -s <"""u"""Вкл/Выкл звуки страницы [on, off]>
-        -b <"""u""">Текущая ставка""",
+        -b <"""u"""Текущая ставка>""",
                           version='1.0')
     PARSER.add_option('-u', '--user',
                       dest='user',
