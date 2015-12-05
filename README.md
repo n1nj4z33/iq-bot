@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/n1nj4z33/iq-bot.png)](https://travis-ci.org/n1nj4z33/iq-bot)
 #iq-bot(Python)
 
 ###Required:
