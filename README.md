@@ -1,7 +1,7 @@
 #iq-bot(Python-Websockets)
 
 ###Required:
-pip install -r requirenments.txt
+pip install -r requirements.txt
 
 ###Usage:
 python bot.py
