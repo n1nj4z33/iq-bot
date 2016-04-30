@@ -6,16 +6,36 @@ import websocket
 import time
 import requests
 
+skey = None
 
 def on_message(ws, message):
+    delta = 0
+    localtime = int(round(time.time() * 1000))
+    global skey
 
     raw = json.loads(message)
     if (raw['name'] == 'timeSync'):
-        time_str = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(float(raw['msg']) / 1000))
+        servertime = int(raw['msg'])
+
+
+        delta = localtime - servertime
+
         #print time_str
     if (raw['name'] == 'profile'):
+
         skey = raw['msg']['skey']
         print("Skey: {}".format(skey))
+
+    if (raw['name'] == 'tradersPulse'):
+        value = raw['msg']
+
+        bulls = True if value['76'] > 60 else False
+        print skey
+        if not bulls:
+            ws.send(json.dumps({"name":"buy","msg":{"price":10,"refund_value":0,"act":76,"exp":1462026060,"type":"turbo","direction":"put","value":1.142916,"time":1462026030,"skey":skey}}))
+        else:
+            ws.send(json.dumps({"name":"buy","msg":{"price":10,"refund_value":0,"act":76,"exp":1462026060,"type":"turbo","direction":"call","value":1.142916,"time":1462026030,"skey":skey}}))
+        print bulls
     else:
         print message
 
@@ -55,8 +75,6 @@ def on_open(ws):
     ws.send(json.dumps({"name":"unSubscribe","msg":"feedTopTraders2"}))
     ws.send(json.dumps({"name":"unSubscribe","msg":"feedRecentBetsMulti"}))
     ws.send(json.dumps({"name":"unSubscribe","msg":"tournament"}))
-
-
 
 
 if __name__ == "__main__":
