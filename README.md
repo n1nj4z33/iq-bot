@@ -1,29 +1,11 @@
-[![Build Status](https://travis-ci.org/n1nj4z33/iq-bot.png)](https://travis-ci.org/n1nj4z33/iq-bot)
-#iq-bot(Python)
+#iq-bot(Python-Websockets)
 
 ###Required:
-* selenium
-* pywin32
+pip install -r requirenments.txt
 
 ###Usage:
-python iq.py
-* -u <'Email' пользователя>
-* -p <Пароль пользователя>
-* -m <Выбор режима работы [demo, real, test]>
-* -o <Выбор опциона [turbo, bin]>
-* -l <Выбор языка MT alert окна [eng, rus]>
-* -a <Выбор актива [eur/usd, aud/cad, etc]>
-* -c <Опции для запуска Chrome>
-Полный список опций запуска Crome (http://peter.sh/experiments/chromium-command-line-switches/)
-* -s <Вкл/Выкл звуки страницы [on, off]>
-* -b <Текущая ставка [int max 10]>
-
-####Example:
-```./iq.py -u user_name -p password -m test```
+python bot.py
 
 ####Info:
-Режимы работы 
-* demo (Демо счет)
-* real (Реальный счет)
-* test (Тестовый режим без сообщений от МТ)
+Логинится, подключается к вебсокетам, подписывается/отписывается на каналы сообщений
 
