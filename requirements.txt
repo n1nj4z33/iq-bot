@@ -1,3 +1,4 @@
 websocket-client
 requests
 enum
+PyYaml
