@@ -115,8 +115,8 @@ def on_message(_ws, message):
 
         buyTime = int(servertime / 1000)
 
-        if server_time.second == 0:
-            logging.info('00 sec')
+        if server_time.second == 1:
+            logging.info('01 sec')
             # Запрашиваем последнюю закрытую свечу
             ws_get_candles(_ws, Active.EURUSD, 60, 214, buyTime - 60, buyTime)
 
