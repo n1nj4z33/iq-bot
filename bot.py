@@ -23,7 +23,7 @@ buyed = False
 exp_time_seconds = 0
 last_candle = Candle([0, 0, 0, 0, 0])
 lot = 10
-
+martin_leverage = 0
 
 def buy_active(_ws, direction, buy_time, exp_time_in_seconds):
     global lot
@@ -98,6 +98,7 @@ def on_message(_ws, message):
     global exp_time_seconds
     global lot
     global last_candle
+    global martin_leverage
     raw = json.loads(message)
     # logging.debug(message)
     if 'timeSync' in raw['name']:
@@ -143,15 +144,22 @@ def on_message(_ws, message):
         profit = raw['msg'][0]['profit']
         buyed = False
         if profit == lot:
-            logging.info("Ничья пробуем еще раз")
+            if martin_leverage < 5:
+                logging.info("Ничья пробуем еще раз")
+            else:
+                logging.info("Ничья но мартин большой, начинаем сначала")
+                lot = 10
+                martin_leverage = 0
 
         elif profit > 0:
             logging.info("Выиграли.")
             lot = 10
+            martin_leverage = 0
 
         else:
             logging.info("Проиграли увеличиваем ставку")
             lot *= 2.5
+            martin_leverage += 1
 
     elif 'tradersPulse' in raw['name']:
         pass
