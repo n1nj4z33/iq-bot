@@ -11,17 +11,10 @@ FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
 logging.basicConfig(format=FORMAT)
 logger.setLevel(logging.DEBUG)
 
-
 import websocket
 import time
-import requests
-import enum
 
-from enum import Enum
-
-class Direction(Enum):
-    call = 'call'
-    put = 'put'
+from classes import CandleType,Candle,Direction, Active
 
 skey = None
 
@@ -30,17 +23,54 @@ buyPrice = 0
 buyed = False
 exp_time_seconds = 0
 
+lot = 10
+
 def buyActive(ws, direction, buyTime, expTimeInSeconds):
+    global lot
     logging.info("Посылаем запрос на покупку ...")
     ws.send(json.dumps({"name": "buy",
                         "msg": {
-                            "price": 10,
+                            "price": lot,
                             "exp": expTimeInSeconds,
                             "act": 1,
                             "type": "turbo",
                             "time": buyTime,
                             "direction": direction
                         }}))
+
+
+def ws_get_candles(ws,active,duration,chunk_size, fromTime, till):
+    ws.send(json.dumps({"name": "candles", "msg": {
+        "active_id": active,
+        "duration": duration,
+        "chunk_size": chunk_size,
+        "from": fromTime,
+        "till": till
+    }}))
+
+
+def parse_candle(candle):
+    return Candle(candle)
+
+
+def get_candles(candles):
+    parsed_candles = []
+    candle_types = []
+    for candle in candles:
+        parsed_candle = parse_candle(candle)
+        logging.info("{}:{}:{}:{}:{}".format(parsed_candle.timestamp,
+                                             parsed_candle.open,
+                                             parsed_candle.high,
+                                             parsed_candle.low,
+                                             parsed_candle.close))
+        candle_types.append(parsed_candle.get_type())
+        parsed_candles.append(parsed_candle)
+
+    logging.info("Got: {} candles".format(len(parsed_candles)))
+    logging.info("Types: {}".format(candle_types))
+
+
+
 
 def on_message(ws, message):
     #print message
@@ -49,7 +79,9 @@ def on_message(ws, message):
     global buyTime
     global buyed
     global exp_time_seconds
+    global lot
     raw = json.loads(message)
+    #logging.debug(message)
     if 'timeSync' in raw['name']:
         servertime = int(raw['msg'])
 
@@ -67,6 +99,10 @@ def on_message(ws, message):
 
         buyTime = int(servertime/1000)
 
+        if buyTime % 60 == 0:
+            logging.info('Minute')
+            ws_get_candles(ws, Active.EURUSD , 60, 214, buyTime - 300, buyTime)
+
     elif 'profile' in raw['name']:
         if 'skey' in raw['msg']:
             skey = raw['msg']['skey']
@@ -76,11 +112,11 @@ def on_message(ws, message):
 
         buyPrice = raw['msg']['value']
         if not buyed:
-            buyActive(ws,Direction.call,buyTime,exp_time_seconds)
+            #buyActive(ws,Direction.call,buyTime,exp_time_seconds)
             buyed = True
 
     elif 'buyComplete' in raw['name']:
-        logging.debug(message)
+
         success = raw['msg']['isSuccessful']
         if success:
             logging.info("Куплено ...")
@@ -92,14 +128,21 @@ def on_message(ws, message):
         profit = raw['msg'][0]['profit']
         if profit > 0:
             logging.info("Выиграли.")
+            lot = 10
         else:
             logging.info("Проиграли увеличиваем ставку")
+            lot = lot * 2.5
 
-    elif raw['name'] == 'tradersPulse':
+    elif 'tradersPulse' in raw['name']:
         value = raw['msg']
 
+    elif 'candles' in raw['name']:
+        logging.debug(message)
+        # OHLC
+        get_candles(raw['msg']['data'])
+
     else:
-        print message
+        logging.debug(message)
 
 
 def on_error(ws, error):
@@ -120,6 +163,25 @@ def on_open(ws):
     #ws.send(json.dumps({"name":"setActives","msg":{"actives":[76]}}))
     # EURUSD
     ws.send(json.dumps({"name":"setActives","msg":{"actives":[1]}}))
+
+    # candles
+    # ["{\"name\":\"candles\",\"msg\":{\"active_id\":1,\"duration\":5,\"chunk_size\":100,\"from\":1462203520,\"till\":1462204000,\"layer\":\"layer-main-4\",\"gl\":\"true\"}}"]
+    # ["{\"name\":\"candles\",\"msg\":{\"active_id\":1,\"duration\":120,\"chunk_size\":56,\"from\":1462258700,\"till\":1462264940,\"layer\":\"layer-prev-1\",\"gl\":\"true\"}}"]
+
+    ws.send(json.dumps(dict(
+        name='candles',
+        msg=dict(
+            active_id=1,
+            duration=5,
+            chunk_size=100,
+            #from=1462203520,
+            till=1462264940,
+            layer='layer-main-4',
+            gl=True
+        )
+    )))
+
+
 
     ws.send(json.dumps({"name":"subscribe","msg":"activeCommissionChange"}))
     ws.send(json.dumps({"name":"unSubscribe","msg":"iqguard"}))
