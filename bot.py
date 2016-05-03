@@ -7,7 +7,7 @@ import datetime
 import logging
 
 logger = logging.getLogger()
-FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
+FORMAT = "%(asctime)s:%(levelname)s:\t [%(filename)s:%(lineno)s - \t%(funcName)s()\t\t] %(message)s"
 logging.basicConfig(format=FORMAT)
 logger.setLevel(logging.DEBUG)
 
@@ -22,12 +22,12 @@ buyTime = 0
 buyPrice = 0
 buyed = False
 exp_time_seconds = 0
-
+last_candle = Candle([0,0,0,0,0])
 lot = 10
 
 def buyActive(ws, direction, buyTime, expTimeInSeconds):
     global lot
-    logging.info("Посылаем запрос на покупку ...")
+    logging.info("Посылаем запрос {} ... Lot: {}".format(direction, lot))
     ws.send(json.dumps({"name": "buy",
                         "msg": {
                             "price": lot,
@@ -49,16 +49,23 @@ def ws_get_candles(ws,active,duration,chunk_size, fromTime, till):
     }}))
 
 
+
+
 def parse_candle(candle):
     return Candle(candle)
 
 
 def get_candles(candles):
+    global last_candle
+    global buyTime
+    global buyed
+    global exp_time_seconds
+
     parsed_candles = []
     candle_types = []
     for candle in candles:
         parsed_candle = parse_candle(candle)
-        logging.info("{}:{}:{}:{}:{}:{}".format(parsed_candle.timestamp,
+        logging.debug("{}:{}:{}:{}:{}:{}".format(parsed_candle.timestamp,
                                                 parsed_candle.open,
                                                 parsed_candle.high,
                                                 parsed_candle.low,
@@ -66,6 +73,21 @@ def get_candles(candles):
                                                 parsed_candle.get_type()))
         candle_types.append(parsed_candle.get_type())
         parsed_candles.append(parsed_candle)
+    last_candle = parsed_candles[0]
+
+    logging.info("Last_candle: {}".format(last_candle))
+
+    if not buyed:
+
+        if last_candle.get_type() == CandleType.green:
+            logging.info("Open call direction: buyTime: {}\t Exp_time:{}".format(buyTime,exp_time_seconds))
+            buyActive(ws, Direction.call, buyTime, exp_time_seconds)
+        elif last_candle.get_type() == CandleType.red:
+            logging.info("Open put direction: buyTime: {}\t Exp_time:{}".format(buyTime,exp_time_seconds))
+            buyActive(ws, Direction.put, buyTime, exp_time_seconds)
+        else:
+            logging.debug("Wrong Candle type")
+
 
     logging.info("Got: {} candles".format(len(parsed_candles)))
     logging.info("Types: {}".format(candle_types))
@@ -85,6 +107,7 @@ def on_message(ws, message):
     global buyed
     global exp_time_seconds
     global lot
+    global last_candle
     raw = json.loads(message)
     #logging.debug(message)
     if 'timeSync' in raw['name']:
@@ -106,8 +129,10 @@ def on_message(ws, message):
 
         if server_time.second == 0:
             logging.info('00 sec')
-            # Получаем последнюю закрытую свечу
-            ws_get_candles(ws, Active.EURUSD , 60, 214, buyTime - 60, buyTime)
+            # Запрашиваем последнюю закрытую свечу
+            ws_get_candles(ws, Active.EURUSD, 60, 214, buyTime - 60, buyTime)
+
+
 
     elif 'profile' in raw['name']:
         if 'skey' in raw['msg']:
@@ -117,21 +142,21 @@ def on_message(ws, message):
     elif 'newChartData' in raw['name']:
 
         buyPrice = raw['msg']['value']
-        if not buyed:
-            #buyActive(ws,Direction.call,buyTime,exp_time_seconds)
-            buyed = True
+
 
     elif 'buyComplete' in raw['name']:
 
         success = raw['msg']['isSuccessful']
         if success:
             logging.info("Куплено ...")
+            buyed = True
 
         else:
             logging.info(u"Не смог купить актив: {}".format(raw['msg']['message'][0]))
 
     elif 'listInfoData' in raw['name']:
         profit = raw['msg'][0]['profit']
+        buyed = False
         if profit > 0:
             logging.info("Выиграли.")
             lot = 10

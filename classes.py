@@ -26,18 +26,21 @@ class Candle:
             return CandleType.red
 
     def __repr__(self):
-        return "Time: {} \t Open: {}\t High: {}\t Low: {}\t Close: {}".format(self.time,
+        return "Time: {} \t Open: {}\t High: {}\t Low: {}\t Close: {}\t Type: {}".format(self.timestamp,
                                                                               self.open,
                                                                               self.high,
                                                                               self.low,
-                                                                              self.close)
+                                                                              self.close,
+                                                                              self.get_type())
 
     def __str__(self):
-        return "Time: {} \t Open: {}\t High: {}\t Low: {}\t Close: {}".format(self.time,
+        return "Time: {} \t Open: {}\t High: {}\t Low: {}\t Close: {}\t Type: {}".format(self.timestamp,
                                                                               self.open,
                                                                               self.high,
                                                                               self.low,
-                                                                              self.close)
+                                                                              self.close,
+                                                                              self.get_type())
+
 
 class Active(Enum):
     EURUSD = 1
