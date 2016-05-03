@@ -1,3 +1,4 @@
 .idea
 *.pyc
 debug.log
+config.yml
