@@ -13,7 +13,7 @@ from classes import CandleType, Candle, Direction, Active
 logger = logging.getLogger()
 FORMAT = "%(asctime)s:%(levelname)s:\t [%(filename)s:%(lineno)s - \t%(funcName)s()\t] %(message)s"
 logging.basicConfig(format=FORMAT)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 skey = None
 
