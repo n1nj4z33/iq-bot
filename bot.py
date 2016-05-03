@@ -142,9 +142,13 @@ def on_message(_ws, message):
     elif 'listInfoData' in raw['name']:
         profit = raw['msg'][0]['profit']
         buyed = False
-        if profit > 0:
+        if profit == lot:
+            logging.info("Ничья пробуем еще раз")
+
+        elif profit > 0:
             logging.info("Выиграли.")
             lot = 10
+
         else:
             logging.info("Проиграли увеличиваем ставку")
             lot *= 2.5
