@@ -58,16 +58,21 @@ def get_candles(candles):
     candle_types = []
     for candle in candles:
         parsed_candle = parse_candle(candle)
-        logging.info("{}:{}:{}:{}:{}".format(parsed_candle.timestamp,
-                                             parsed_candle.open,
-                                             parsed_candle.high,
-                                             parsed_candle.low,
-                                             parsed_candle.close))
+        logging.info("{}:{}:{}:{}:{}:{}".format(parsed_candle.timestamp,
+                                                parsed_candle.open,
+                                                parsed_candle.high,
+                                                parsed_candle.low,
+                                                parsed_candle.close,
+                                                parsed_candle.get_type()))
         candle_types.append(parsed_candle.get_type())
         parsed_candles.append(parsed_candle)
 
     logging.info("Got: {} candles".format(len(parsed_candles)))
     logging.info("Types: {}".format(candle_types))
+
+
+def get_direction_from_candles(candle_types):
+    pass
 
 
 
@@ -99,9 +104,10 @@ def on_message(ws, message):
 
         buyTime = int(servertime/1000)
 
-        if buyTime % 60 == 0:
-            logging.info('Minute')
-            ws_get_candles(ws, Active.EURUSD , 60, 214, buyTime - 300, buyTime)
+        if server_time.second == 0:
+            logging.info('00 sec')
+            # Получаем последнюю закрытую свечу
+            ws_get_candles(ws, Active.EURUSD , 60, 214, buyTime - 60, buyTime)
 
     elif 'profile' in raw['name']:
         if 'skey' in raw['msg']:

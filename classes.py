@@ -20,7 +20,7 @@ class Candle:
         self.low = data[4]
 
     def get_type(self):
-        if self.close > self.open:
+        if self.close >= self.open:
             return CandleType.green
         else:
             return CandleType.red
