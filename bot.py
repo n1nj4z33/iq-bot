@@ -115,10 +115,10 @@ def on_message(_ws, message):
 
         buyTime = int(servertime / 1000)
 
-        if server_time.second == 1:
+        if server_time.second == 5:
             logging.info('01 sec')
             # Запрашиваем последнюю закрытую свечу
-            ws_get_candles(_ws, Active.EURUSD, 60, 214, buyTime - 60, buyTime)
+            ws_get_candles(_ws, Active.EURUSD, 60, 214, buyTime - 65, buyTime)
 
     elif 'profile' in raw['name']:
         if 'skey' in raw['msg']:
