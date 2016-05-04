@@ -22,6 +22,7 @@ buyPrice = 0
 buyed = False
 exp_time_seconds = 0
 last_candle = Candle([0, 0, 0, 0, 0])
+current_candle = Candle([0, 0, 0, 0, 0])
 lot = 10
 martin_leverage = 0
 
@@ -55,6 +56,7 @@ def parse_candle(candle):
 
 def get_candles(candles):
     global last_candle
+    global current_candle
     global buyTime
     global buyed
     global exp_time_seconds
@@ -72,9 +74,10 @@ def get_candles(candles):
         candle_types.append(parsed_candle.get_type())
         parsed_candles.append(parsed_candle)
     last_candle = parsed_candles[0]
+    current_candle = parsed_candles[len(parsed_candles)-1]
 
     logging.info("Last_candle: {}".format(last_candle))
-
+    logging.info("Current Candle: {}".format(current_candle))
     if not buyed:
 
         if last_candle.get_type() == CandleType.green:
@@ -98,6 +101,7 @@ def on_message(_ws, message):
     global exp_time_seconds
     global lot
     global last_candle
+    global current_candle
     global martin_leverage
     raw = json.loads(message)
     # logging.debug(message)
@@ -116,10 +120,10 @@ def on_message(_ws, message):
 
         buyTime = int(servertime / 1000)
 
-        if server_time.second == 5:
-            logging.info('05 sec')
+        if server_time.second == 50:
+            logging.info('50 sec')
             # Запрашиваем последнюю закрытую свечу
-            ws_get_candles(_ws, Active.EURUSD, 60, 214, buyTime - 65, buyTime)
+            ws_get_candles(_ws, Active.EURUSD, 60, 214, buyTime - 120, buyTime)
 
     elif 'profile' in raw['name']:
         if 'skey' in raw['msg']:
@@ -129,6 +133,8 @@ def on_message(_ws, message):
     elif 'newChartData' in raw['name']:
 
         buyPrice = raw['msg']['value']
+        current_candle.close = buyPrice
+        logging.info("Current Candle: {}".format(current_candle))
 
     elif 'buyComplete' in raw['name']:
 
