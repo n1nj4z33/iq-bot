@@ -13,7 +13,7 @@ from classes import CandleType, Candle, Direction, Active
 logger = logging.getLogger()
 FORMAT = "%(asctime)s:%(levelname)s:\t [%(filename)s:%(lineno)s - \t%(funcName)s()\t] %(message)s"
 logging.basicConfig(format=FORMAT)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 skey = None
 
@@ -26,14 +26,16 @@ current_candle = Candle([0, 0, 0, 0, 0])
 lot = 10
 martin_leverage = 0
 
+
 def buy_active(_ws, direction, buy_time, exp_time_in_seconds):
     global lot
+    global current_active
     logging.info("Посылаем запрос {} ... Lot: {}".format(direction, lot))
     _ws.send(json.dumps({"name": "buy",
                          "msg": {
                              "price": lot,
                              "exp": exp_time_in_seconds,
-                             "act": 1,
+                             "act": current_active,
                              "type": "turbo",
                              "time": buy_time,
                              "direction": direction
@@ -102,6 +104,7 @@ def on_message(_ws, message):
     global lot
     global last_candle
     global current_candle
+    global current_active
     global martin_leverage
     raw = json.loads(message)
     # logging.debug(message)
@@ -112,18 +115,18 @@ def on_message(_ws, message):
         server_time = datetime.datetime.fromtimestamp(servertime / 1000)
         exp_time = server_time + datetime.timedelta(minutes=1)
 
-        if server_time.second > 30:
-            exp_time = server_time + datetime.timedelta(minutes=2)
+        # if server_time.second > 30:
+        #     exp_time = server_time + datetime.timedelta(minutes=2)
 
         exp_time = exp_time.replace(second=0, microsecond=0)
         exp_time_seconds = int(time.mktime(exp_time.timetuple()))
 
         buyTime = int(servertime / 1000)
 
-        if server_time.second == 50:
-            logging.info('50 sec')
+        if server_time.second == 1:
+            # logging.info('50 sec')
             # Запрашиваем последнюю закрытую свечу
-            ws_get_candles(_ws, Active.EURUSD, 60, 214, buyTime - 120, buyTime)
+            ws_get_candles(_ws, current_active, 60, 214, buyTime - 61, buyTime)
 
     elif 'profile' in raw['name']:
         if 'skey' in raw['msg']:
@@ -149,13 +152,9 @@ def on_message(_ws, message):
     elif 'listInfoData' in raw['name']:
         profit = raw['msg'][0]['profit']
         buyed = False
+
         if profit == lot:
-            if martin_leverage < 5:
-                logging.info("Ничья пробуем еще раз")
-            else:
-                logging.info("Ничья но мартин большой, начинаем сначала")
-                lot = 10
-                martin_leverage = 0
+            logging.info("Ничья пробуем еще раз")
 
         elif profit > 0:
             logging.info("Выиграли.")
@@ -165,7 +164,13 @@ def on_message(_ws, message):
         else:
             logging.info("Проиграли увеличиваем ставку")
             lot *= 2.5
-            martin_leverage += 1
+
+            if martin_leverage < 5:
+                martin_leverage += 1
+            else:
+                logging.info("Ничья но мартин большой, начинаем сначала")
+                lot = 10
+                martin_leverage = 0
 
     elif 'tradersPulse' in raw['name']:
         pass
@@ -188,15 +193,13 @@ def on_close(_ws):
 
 
 def on_open(_ws):
+    global current_active
     _ws.send(json.dumps({"name": "ssid", "msg": ssid}))
     _ws.send(json.dumps({"name": "subscribe", "msg": "deposited"}))
     _ws.send(json.dumps({"name": "subscribe", "msg": "tradersPulse"}))
     _ws.send(json.dumps({"name": "subscribe", "msg": "activeScheduleChange"}))
 
-    # EURUSD-OTC
-    # ws.send(json.dumps({"name":"setActives","msg":{"actives":[76]}}))
-    # EURUSD
-    _ws.send(json.dumps({"name": "setActives", "msg": {"actives": [1]}}))
+    _ws.send(json.dumps({"name": "setActives", "msg": {"actives": [current_active]}}))
 
     _ws.send(json.dumps({"name": "subscribe", "msg": "activeCommissionChange"}))
     _ws.send(json.dumps({"name": "unSubscribe", "msg": "iqguard"}))
@@ -214,6 +217,7 @@ if __name__ == "__main__":
         config = yaml.safe_load(f)
 
     ssid = config['ssid']
+    current_active = config['active']
 
     ws = websocket.WebSocketApp("wss://eu.iqoption.com/echo/websocket",
                                 on_message=on_message,
