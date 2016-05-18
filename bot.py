@@ -13,7 +13,7 @@ from classes import CandleType, Candle, Direction, Active
 logger = logging.getLogger()
 FORMAT = "%(asctime)s:%(levelname)s:\t [%(filename)s:%(lineno)s - \t%(funcName)s()\t] %(message)s"
 logging.basicConfig(format=FORMAT)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 skey = None
 
@@ -23,7 +23,7 @@ buyed = False
 exp_time_seconds = 0
 last_candle = Candle([0, 0, 0, 0, 0])
 current_candle = Candle([0, 0, 0, 0, 0])
-lot = 10
+
 martin_leverage = 0
 
 
@@ -78,15 +78,15 @@ def get_candles(candles):
     last_candle = parsed_candles[0]
     current_candle = parsed_candles[len(parsed_candles)-1]
 
-    logging.info("Last_candle: {}".format(last_candle))
-    logging.info("Current Candle: {}".format(current_candle))
+    logging.debug("Last_candle: {}".format(last_candle))
+    logging.debug("Current Candle: {}".format(current_candle))
     if not buyed:
 
         if last_candle.get_type() == CandleType.green:
-            logging.info("Open call direction: buyTime: {}\t Exp_time:{}".format(buyTime, exp_time_seconds))
+            logging.info("Open call direction: buyTime: {}\t Exp_time:{}".format(datetime.datetime.fromtimestamp(buyTime), datetime.datetime.fromtimestamp(exp_time_seconds)))
             buy_active(ws, Direction.call, buyTime, exp_time_seconds)
         elif last_candle.get_type() == CandleType.red:
-            logging.info("Open put direction: buyTime: {}\t Exp_time:{}".format(buyTime, exp_time_seconds))
+            logging.info("Open put direction: buyTime: {}\t Exp_time:{}".format(datetime.datetime.fromtimestamp(buyTime), datetime.datetime.fromtimestamp(exp_time_seconds)))
             buy_active(ws, Direction.put, buyTime, exp_time_seconds)
         else:
             logging.debug("Wrong Candle type")
@@ -102,6 +102,7 @@ def on_message(_ws, message):
     global buyed
     global exp_time_seconds
     global lot
+    global base_lot
     global last_candle
     global current_candle
     global current_active
@@ -137,13 +138,14 @@ def on_message(_ws, message):
 
         buyPrice = raw['msg']['value']
         current_candle.close = buyPrice
-        logging.info("Current Candle: {}".format(current_candle))
+        logging.debug("Current Candle: {}".format(current_candle))
 
     elif 'buyComplete' in raw['name']:
 
         success = raw['msg']['isSuccessful']
         if success:
             logging.info("Куплено ...")
+            logging.info("Лот: {}".format(lot))
             buyed = True
 
         else:
@@ -151,14 +153,20 @@ def on_message(_ws, message):
 
     elif 'listInfoData' in raw['name']:
         profit = raw['msg'][0]['profit']
+        profit_amount = raw['msg'][0]['profit_amount']
+        win_amount = raw['msg'][0]['win_amount']
         buyed = False
+        logging.debug("Raw message: {}".format(raw['msg']))
+        logging.info("Profit: {} Lot: {} Profit_amount {} Win_amount: {}".format(profit,lot,profit_amount,win_amount))
 
-        if profit == lot:
+        if profit_amount == lot:
             logging.info("Ничья пробуем еще раз")
+            lot = profit
+            logging.info("Лот: {}".format(lot))
 
-        elif profit > 0:
+        elif profit_amount > 0:
             logging.info("Выиграли.")
-            lot = 10
+            lot = base_lot
             martin_leverage = 0
 
         else:
@@ -168,8 +176,7 @@ def on_message(_ws, message):
             if martin_leverage < 5:
                 martin_leverage += 1
             else:
-                logging.info("Ничья но мартин большой, начинаем сначала")
-                lot = 10
+                lot = base_lot
                 martin_leverage = 0
 
     elif 'tradersPulse' in raw['name']:
@@ -218,6 +225,10 @@ if __name__ == "__main__":
 
     ssid = config['ssid']
     current_active = config['active']
+
+    lot = config['lot']
+    base_lot = lot
+    logging.info("Запуск с параметрами: \tSSID: {}\tActive: {}\tLot:{}".format(ssid,current_active,lot))
 
     ws = websocket.WebSocketApp("wss://eu.iqoption.com/echo/websocket",
                                 on_message=on_message,

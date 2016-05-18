@@ -1,2 +1,3 @@
 ssid: YOUR_SSID_FROM_CHROME
-active: Active.EURUSD_OTC
+active: 1
+lot: 5
